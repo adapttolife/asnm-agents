@@ -1,0 +1,7 @@
+template
+archive
+.venv
+.env
+locks/*
+logs/*
+node_modules/
