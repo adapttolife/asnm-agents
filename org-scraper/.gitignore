@@ -1,0 +1,4 @@
+locks/*
+logs/*
+.env
+node_modules/

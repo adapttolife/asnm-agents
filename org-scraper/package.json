@@ -1,0 +1,34 @@
+{
+	"name": "org-scraper",
+	"version": "1.0.0",
+	"description": "Scrape adaptive sports organizations from search engines using Gemini for ASNM.",
+	"main": "scrape.js",
+	"scripts": {
+		"start": "node scrape.js",
+		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+		"dev": "nodemon scrape.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/adapttolife/asnm-agents.git"
+	},
+	"keywords": [
+		"scraper",
+		"gemini"
+	],
+	"author": "Faisal N",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/adapttolife/asnm-agents/issues"
+	},
+	"homepage": "https://github.com/adapttolife/asnm-agents#readme",
+	"dependencies": {
+		"@google/genai": "^2.27.0",
+		"dotenv": "^18.0.6"
+	},
+	"devDependencies": {
+		"jest": "^29.6.1",
+		"nodemon": "^3.0.1"
+	},
+	"type": "module"
+}
