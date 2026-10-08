@@ -12,6 +12,8 @@ var minutesInDay = 24 * 60;
 
 var scrapeMinutesRunTime = 1;
 
-var processRunsNeeded = combinations / (minutesInDay / scrapeMinutesRunTime);
+var processesRunningAtSameTime = 1;
 
-var averageTokensPerRequest = totalTokensPerDay / processRunsNeeded;
+var daysNeededToComplete = combinations / (minutesInDay / scrapeMinutesRunTime);
+
+var averageTokensPerRequest = 
