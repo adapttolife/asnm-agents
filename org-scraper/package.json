@@ -4,6 +4,7 @@
 	"description": "Scrape adaptive sports organizations from search engines using Gemini for ASNM.",
 	"main": "scrape.js",
 	"scripts": {
+		"controller": "node controller.js",
 		"start": "node scrape.js",
 		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
 		"dev": "nodemon scrape.js"
