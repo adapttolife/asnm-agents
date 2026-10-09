@@ -1,0 +1,14 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "database-test",
+	"compatibility_date": "2026-10-09",
+	"main": "minimal-entry.js",
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "asnm-db-staging",
+			"database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9",
+			"remote": true,
+		},
+	],
+}

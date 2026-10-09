@@ -7,6 +7,7 @@
 		"controller": "node controller.js",
 		"start": "node scrape.js",
 		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+		"test:db": "node --experimental-vm-modules node_modules/jest/bin/jest.js database.test.js",
 		"dev": "nodemon scrape.js"
 	},
 	"repository": {
@@ -30,8 +31,9 @@
 		"dotenv": "^18.0.6"
 	},
 	"devDependencies": {
-		"jest": "^29.6.1",
-		"nodemon": "^3.0.1"
+		"jest": "^29.7.0",
+		"nodemon": "^3.0.1",
+		"wrangler": "^4.149.0"
 	},
 	"type": "module"
 }

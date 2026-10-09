@@ -1,8 +1,10 @@
-# Plan
+# ASNM ORganizations Scraper
 
 This project `org-scraper` will be a Node.js script that uses Gemini to search the web for organizations related to a specific adaptive sport, filter out those already present in the Cloudflare D1 database, and return the results in a structured format.
 
 - Node.js script
+- Hosted on Cloudflare Workers
+- Runs every minute
 - Tests with Jest
 - Uses Gemini API
 - Searches the web

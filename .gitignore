@@ -7,3 +7,5 @@ logs/*
 node_modules/
 staging.sql
 staging.db
+*.vars
+.wrangler/
