@@ -11,7 +11,6 @@ This project `org-scraper` will be a Node.js script that uses Gemini to search t
 - Keys unlock automatically after cooldown
 - Cloudflare D1 database integration to
   - Check for existing organizations
-  - Establish schema for the organizations table
   - Push new organizations to the database
   - Get a sample organization row from the database for reference
   - Get sports

@@ -1,7 +1,6 @@
 import * as locks from './locks.js';
 import * as gemini from './gemini.js';
-import * as schema from './schema.js';
-import CDN from '@dangoweb/cdn';
+// import CDN from '@dangoweb/cdn';
 
 const dateStart = new Date();
 console.log(`Organization scraping starting. It is ${dateStart.toLocaleString()}.`);
@@ -15,21 +14,21 @@ if (locked) {
 console.log('Setting lock for scraping...');
 await locks.set('scrape');
 
-const cdn = new CDN({
-  dir: './cache/',
-  extension: '.json',
-  ttl: 86400,
-});
+// const cdn = new CDN({
+//   dir: './cache/',
+//   extension: '.json',
+//   ttl: 86400,
+// });
 
-let tableSchema = null;
-if (cdn.valid('tableSchema')) {
-  tableSchema = cdn.get('tableSchema');
-} else {
-  tableSchema = { 'hello': 'world' };
-  cdn.cache('tableSchema', tableSchema);
-};
+// let tableSchema = null;
+// if (cdn.valid('tableSchema')) {
+//   tableSchema = cdn.get('tableSchema');
+// } else {
+//   tableSchema = { 'hello': 'world' };
+//   cdn.cache('tableSchema', tableSchema);
+// };
 
-console.log(tableSchema);
+// console.log(tableSchema);
 
 console.log('Removing lock for scraping...');
 await locks.remove('scrape');
