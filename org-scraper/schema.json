@@ -1,0 +1,301 @@
+{
+    "type": "array",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:sqlite:table:organizations",
+    "title": "organizations",
+    "description": "An array of Adaptive sports organization objects",
+    "minItems": 1,
+    "uniqueItems": true,
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "minLength": 1
+            },
+            "org_type": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "enum": []
+            },
+            "sport": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "sport_key": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "sports_json": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "website_url": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "pattern": "^https?://[A-Za-z0-9-]+(?:.[A-Za-z0-9-]+)+(?::d{1,5})?/(?:[^s]*)$"
+            },
+            "email": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "phone": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "pattern": "^[0-9]{3}-[0-9]{3}-[0-9]{4}$"
+            },
+            "city": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "state": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "enum": [
+                    "AL",
+                    "AK",
+                    "AZ",
+                    "AR",
+                    "CA",
+                    "CO",
+                    "CT",
+                    "DE",
+                    "FL",
+                    "GA",
+                    "HI",
+                    "ID",
+                    "IL",
+                    "IN",
+                    "IA",
+                    "KS",
+                    "KY",
+                    "LA",
+                    "ME",
+                    "MD",
+                    "MA",
+                    "MI",
+                    "MN",
+                    "MS",
+                    "MO",
+                    "MT",
+                    "NE",
+                    "NV",
+                    "NH",
+                    "NJ",
+                    "NM",
+                    "NY",
+                    "NC",
+                    "ND",
+                    "OH",
+                    "OK",
+                    "OR",
+                    "PA",
+                    "RI",
+                    "SC",
+                    "SD",
+                    "TN",
+                    "TX",
+                    "UT",
+                    "VT",
+                    "VA",
+                    "WA",
+                    "WV",
+                    "WI",
+                    "WY",
+                    null
+                ]
+            },
+            "state_name": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "enum": [
+                    "Alabama",
+                    "Alaska",
+                    "Arizona",
+                    "Arkansas",
+                    "California",
+                    "Colorado",
+                    "Connecticut",
+                    "Delaware",
+                    "Florida",
+                    "Georgia",
+                    "Hawaii",
+                    "Idaho",
+                    "Illinois",
+                    "Indiana",
+                    "Iowa",
+                    "Kansas",
+                    "Kentucky",
+                    "Louisiana",
+                    "Maine",
+                    "Maryland",
+                    "Massachusetts",
+                    "Michigan",
+                    "Minnesota",
+                    "Mississippi",
+                    "Missouri",
+                    "Montana",
+                    "Nebraska",
+                    "Nevada",
+                    "New Hampshire",
+                    "New Jersey",
+                    "New Mexico",
+                    "New York",
+                    "North Carolina",
+                    "North Dakota",
+                    "Ohio",
+                    "Oklahoma",
+                    "Oregon",
+                    "Pennsylvania",
+                    "Rhode Island",
+                    "South Carolina",
+                    "South Dakota",
+                    "Tennessee",
+                    "Texas",
+                    "Utah",
+                    "Vermont",
+                    "Virginia",
+                    "Washington",
+                    "West Virginia",
+                    "Wisconsin",
+                    "Wyoming",
+                    null
+                ]
+            },
+            "zip": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "pattern": "^[0-9]{5}$"
+            },
+            "country": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "default": "United States",
+                "const": "United States"
+            },
+            "lat": {
+                "type": [
+                    "number",
+                    "null"
+                ]
+            },
+            "lng": {
+                "type": [
+                    "number",
+                    "null"
+                ]
+            },
+            "geo_precision": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "description": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "cost_note": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "$comment": "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty."
+            },
+            "equipment_provided": {
+                "type": [
+                    "integer",
+                    "null"
+                ],
+                "enum": [
+                    0,
+                    1,
+                    null
+                ],
+                "$comment": "If unknown, leave this field empty."
+            },
+            "ages": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "data_quality_rating": {
+                "type": [
+                    "string",
+                    "null"
+                ]
+            },
+            "primary_data_source": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "const": "Gemini"
+            },
+            "verification_status": {
+                "type": "string",
+                "default": "unverified",
+                "minLength": 1,
+                "enum": [
+                    "verified",
+                    "unverified"
+                ],
+                "$comment": "If the website URL is accessible."
+            },
+            "verification_method": {
+                "type": [
+                    "string",
+                    "null"
+                ],
+                "const": "gemini"
+            },
+            "status": {
+                "type": "string",
+                "default": "active",
+                "minLength": 1
+            },
+            "is_public": {
+                "type": "integer",
+                "default": 1,
+                "enum": [
+                    0,
+                    1
+                ]
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "name",
+            "verification_status",
+            "status",
+            "is_public"
+        ]
+    }
+}
