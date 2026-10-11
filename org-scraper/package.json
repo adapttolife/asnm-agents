@@ -7,7 +7,9 @@
 		"controller": "node controller.js",
 		"start": "node scrape.js",
 		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+		"test:locks": "node --experimental-vm-modules node_modules/jest/bin/jest.js locks.test.js",
 		"test:db": "node --experimental-vm-modules node_modules/jest/bin/jest.js database.test.js",
+		"test:gemini": "node --experimental-vm-modules node_modules/jest/bin/jest.js gemini.test.js",
 		"dev": "nodemon scrape.js",
 		"schema": "node schema.js"
 	},

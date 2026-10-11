@@ -49,6 +49,7 @@ export async function gen(contents = '', model = 'gemini-3.5-flash-lite', config
                 includeThoughts: false, // Default to not include thoughts
             },
             tools: [], // Default to no tools
+            candidateCount: 1, // Restrict to 1 response candidate
         },
     };
     if (grounding) params.config.tools.push({ // Add grounding tool if requested
