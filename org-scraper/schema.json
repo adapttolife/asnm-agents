@@ -18,25 +18,180 @@
                     "string",
                     "null"
                 ],
-                "enum": []
+                "enum": [
+                    "member",
+                    "adaptive_club",
+                    "team",
+                    "chapter",
+                    "inclusive_club",
+                    "affiliate",
+                    "event_partner",
+                    "parks_rec",
+                    "parks_recreation",
+                    null
+                ]
             },
             "sport": {
                 "type": [
                     "string",
                     "null"
+                ],
+                "enum": [
+                    "Multi-Sport",
+                    "Wheelchair Basketball",
+                    "Sled Hockey",
+                    "Adaptive Skiing",
+                    "Adaptive Rowing",
+                    "Track & Field",
+                    "Adaptive Sailing",
+                    "Wheelchair Tennis",
+                    "Running",
+                    "Archery",
+                    "Adaptive Swimming",
+                    "Adaptive Cycling",
+                    "Equestrian",
+                    "Wheelchair Curling",
+                    "Adaptive Golf",
+                    "Adaptive Surfing",
+                    "Wheelchair Rugby",
+                    "Shooting Sports",
+                    "Sitting Volleyball",
+                    "Martial Arts",
+                    "Boccia",
+                    "Blind Sports",
+                    "Wheelchair Fencing",
+                    "Adaptive Baseball",
+                    "Wheelchair Lacrosse",
+                    "Adaptive Water Skiing",
+                    "Adaptive Climbing",
+                    "Adaptive Pickleball",
+                    "Adaptive Football",
+                    "Goalball",
+                    "Wheelchair Softball",
+                    "Power Soccer",
+                    "Wheelchair Dance",
+                    "Para Powerlifting",
+                    "Para Triathlon",
+                    "Wheelchair Racing",
+                    "Handcycling",
+                    "Para Nordic Skiing",
+                    "Para Equestrian Vaulting",
+                    "Beep Baseball",
+                    "Amputee Sports",
+                    "Wheelchair Handball",
+                    "Equine therapy",
+                    "Art therapy",
+                    "Veteran meetup",
+                    null
                 ]
             },
             "sport_key": {
                 "type": [
                     "string",
                     "null"
+                ],
+                "enum": [
+                    "amputeesports",
+                    "archery",
+                    "art-therapy",
+                    "baseball",
+                    "basketball",
+                    "beepbaseball",
+                    "blindsports",
+                    "boccia",
+                    "climbing",
+                    "curling",
+                    "cycling",
+                    "dance",
+                    "equestrian",
+                    "equestrianvaulting",
+                    "equine-therapy",
+                    "fencing",
+                    "football",
+                    "goalball",
+                    "golf",
+                    "handball",
+                    "handcycling",
+                    "lacrosse",
+                    "martialarts",
+                    "nordicskiing",
+                    "pickleball",
+                    "powerlifting",
+                    "rowing",
+                    "rugby",
+                    "running",
+                    "sailing",
+                    "shooting",
+                    "skiing",
+                    "sledhockey",
+                    "soccer",
+                    "softball",
+                    "surfing",
+                    "swimming",
+                    "tennis",
+                    "trackfield",
+                    "triathlon",
+                    "veteran-meetup",
+                    "volleyball",
+                    "waterskiing",
+                    "wheelchairracing",
+                    null
                 ]
             },
             "sports_json": {
                 "type": [
-                    "string",
+                    "array",
                     "null"
-                ]
+                ],
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "amputeesports",
+                        "archery",
+                        "art-therapy",
+                        "baseball",
+                        "basketball",
+                        "beepbaseball",
+                        "blindsports",
+                        "boccia",
+                        "climbing",
+                        "curling",
+                        "cycling",
+                        "dance",
+                        "equestrian",
+                        "equestrianvaulting",
+                        "equine-therapy",
+                        "fencing",
+                        "football",
+                        "goalball",
+                        "golf",
+                        "handball",
+                        "handcycling",
+                        "lacrosse",
+                        "martialarts",
+                        "nordicskiing",
+                        "pickleball",
+                        "powerlifting",
+                        "rowing",
+                        "rugby",
+                        "running",
+                        "sailing",
+                        "shooting",
+                        "skiing",
+                        "sledhockey",
+                        "soccer",
+                        "softball",
+                        "surfing",
+                        "swimming",
+                        "tennis",
+                        "trackfield",
+                        "triathlon",
+                        "veteran-meetup",
+                        "volleyball",
+                        "waterskiing",
+                        "wheelchairracing"
+                    ]
+                }
             },
             "website_url": {
                 "type": [
@@ -213,6 +368,14 @@
                 "type": [
                     "string",
                     "null"
+                ],
+                "enum": [
+                    "state",
+                    "city",
+                    null,
+                    "address",
+                    "zip",
+                    null
                 ]
             },
             "description": {
@@ -226,7 +389,8 @@
                     "string",
                     "null"
                 ],
-                "$comment": "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty."
+                "$comment": "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty.",
+                "description": "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty."
             },
             "equipment_provided": {
                 "type": [
@@ -238,7 +402,8 @@
                     1,
                     null
                 ],
-                "$comment": "If unknown, leave this field empty."
+                "$comment": "If unknown, leave this field empty.",
+                "description": "If unknown, leave this field empty."
             },
             "ages": {
                 "type": [
@@ -250,6 +415,12 @@
                 "type": [
                     "string",
                     "null"
+                ],
+                "enum": [
+                    "medium",
+                    "high",
+                    null,
+                    null
                 ]
             },
             "primary_data_source": {
@@ -267,7 +438,8 @@
                     "verified",
                     "unverified"
                 ],
-                "$comment": "If the website URL is accessible."
+                "$comment": "If the website URL is accessible.",
+                "description": "If the website URL is accessible."
             },
             "verification_method": {
                 "type": [
@@ -279,7 +451,13 @@
             "status": {
                 "type": "string",
                 "default": "active",
-                "minLength": 1
+                "minLength": 1,
+                "enum": [
+                    "active",
+                    "duplicate",
+                    "inactive",
+                    "retired"
+                ]
             },
             "is_public": {
                 "type": "integer",

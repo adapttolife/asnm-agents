@@ -36,8 +36,8 @@ describe("tableSchema via D1", () => {
         const resp = await worker.fetch("/?table=organizations");
         expect(resp.status).toBe(200);
         const schema = await resp.json();
-        expect(schema.type).toBe("object");
-        expect(schema.properties).toBeDefined();
+        expect(schema.type).toBe("array");
+        expect(schema.items).toBeDefined();
     });
 
     it("should return an error for a nonexistent table", async () => {

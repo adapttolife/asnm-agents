@@ -149,22 +149,23 @@ export async function tableSchema(tableName, db) {
                 enumSql = 'SELECT DISTINCT org_type FROM organizations';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.org_type);
-                enums = enums.filter(e => (e.split(' ').length === 1) && (e === e.toUpperCase()));
-                if (enums && (enums.length === 0)) property.enum = enums;
+                enums = enums.filter(e => (e.split(' ').length === 1) && (e === e.toLowerCase()));
+                console.log(enums)
+                if (enums && (enums.length > 0)) property.enum = enums;
                 break;
             case "sport":
                 enumSql = 'SELECT DISTINCT name FROM sports';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.name);
-                if (enums && (enums.length === 0)) property.enum = ["Multi-Sport", ...enums];
+                if (enums && (enums.length > 0)) property.enum = ["Multi-Sport", ...enums];
                 break;
             case "sport_key":
                 enumSql = 'SELECT DISTINCT sport_key FROM sports';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.sport_key);
-                if (enums && (enums.length === 0)) property.enum = enums;
+                if (enums && (enums.length > 0)) property.enum = enums;
                 break;
-            case "sport_json":
+            case "sports_json":
                 property.type = "array";
                 property.items = {
                     type: "string"
@@ -172,7 +173,7 @@ export async function tableSchema(tableName, db) {
                 enumSql = 'SELECT DISTINCT sport_key FROM sports';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.sport_key);
-                if (enums && (enums.length === 0)) property.items.enum = enums;
+                if (enums && (enums.length > 0)) property.items.enum = enums;
                 break;
             case "phone":
                 property.pattern = "^[0-9]{3}-[0-9]{3}-[0-9]{4}$";
@@ -196,20 +197,22 @@ export async function tableSchema(tableName, db) {
                 enumSql = 'SELECT DISTINCT geo_precision FROM organizations';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.geo_precision);
-                if (enums && (enums.length === 0)) property.enum = enums;
+                if (enums && (enums.length > 0)) property.enum = enums;
                 break;
             case "cost_note":
                 property.$comment = "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty.";
+                property.description = "This field is optional and may contain additional information about costs or fees associated with the organization. Notes should be formatted like the following. GroupName1: CostDescription1. GroupName2: CostDescription2. If there are no costs or fees, this field may be left empty.";
                 break;
             case "equipment_provided":
                 property.enum = [0, 1];
                 property.$comment = "If unknown, leave this field empty.";
+                property.description = "If unknown, leave this field empty.";
                 break;
             case "data_quality_rating":
                 enumSql = 'SELECT DISTINCT data_quality_rating FROM organizations';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.data_quality_rating);
-                if (enums && (enums.length === 0)) property.enum = enums;
+                if (enums && (enums.length > 0)) property.enum = enums;
                 break;
             case "primary_data_source":
                 property.const = "Gemini";
@@ -217,6 +220,7 @@ export async function tableSchema(tableName, db) {
             case "verification_status":
                 property.enum = ["verified", "unverified"];
                 property.$comment = "If the website URL is accessible.";
+                property.description = "If the website URL is accessible.";
                 break;
             case "verification_method":
                 property.const = "gemini";
@@ -225,7 +229,7 @@ export async function tableSchema(tableName, db) {
                 enumSql = 'SELECT DISTINCT status FROM organizations';
                 ({ results: enums } = await db.prepare(enumSql).all());
                 enums = enums.map(e => e.status);
-                if (enums && (enums.length === 0)) property.enum = enums;
+                if (enums && (enums.length > 0)) property.enum = enums;
                 break;
             case "is_public":
                 property.enum = [0, 1];
