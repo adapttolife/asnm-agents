@@ -33,7 +33,7 @@ describe("tableSchema via D1", () => {
     });
 
     it("should return schema for a table", async () => {
-        const resp = await worker.fetch("/?table=organizations");
+        const resp = await worker.fetch("/schema?table=organizations");
         expect(resp.status).toBe(200);
         const schema = await resp.json();
         expect(schema.type).toBe("array");
@@ -41,12 +41,12 @@ describe("tableSchema via D1", () => {
     }, 20000);
 
     it("should return an error for a nonexistent table", async () => {
-        const resp = await worker.fetch("/?table=nonexistent");
+        const resp = await worker.fetch("/schema?table=nonexistent");
         expect(resp.status).toBe(500);
     }, 20000);
 
     it("should return an error for a missing table name", async () => {
-        const resp = await worker.fetch("/");
+        const resp = await worker.fetch("/schema");
         expect(resp.status).toBe(400);
         const error = await resp.json();
         expect(error.error).toBe("Table name is required");
@@ -57,6 +57,13 @@ describe("tableSchema via D1", () => {
         expect(resp.status).toBe(200);
         const row = await resp.json();
         expect(row).toBeDefined();
+    }, 20000);
+
+    it("should initialize the state-sport table", async () => {
+        const resp = await worker.fetch("/initStateSport");
+        expect(resp.status).toBe(200);
+        const result = await resp.json();
+        expect(result.success).toBe(true);
     }, 20000);
 
     it("should return a list for matching state-sport organizations", async () => {
@@ -89,10 +96,18 @@ describe("tableSchema via D1", () => {
     }, 20000);
 
     it("should return a list of state-sport locks", async () => {
-        const resp = await worker.fetch("/getStateSportLocks");
+        const resp = await worker.fetch("/stateSportLocks");
         expect(resp.status).toBe(200);
         const locks = await resp.json();
         expect(locks).toBeInstanceOf(Array);
         expect(locks.length).toBeGreaterThanOrEqual(0);
+    }, 20000);
+
+    it("should return a list of sports", async () => {
+        const resp = await worker.fetch("/sports");
+        expect(resp.status).toBe(200);
+        const sports = await resp.json();
+        expect(sports).toBeInstanceOf(Array);
+        expect(sports.length).toBeGreaterThanOrEqual(0);
     }, 20000);
 });

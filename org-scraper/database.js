@@ -291,6 +291,13 @@ export async function initStateSport(db) {
         UNIQUE(state, sport)
     )`;
     await db.prepare(createTableSql).run();
+    const sports = await getSports(db);
+    for (const state of states) {
+        for (const sport of sports) {
+            const insertSql = `INSERT OR IGNORE INTO state_sport (state, sport) VALUES (?, ?)`;
+            await db.prepare(insertSql).bind(state, sport.name).run();
+        }
+    }
 }
 
 // Add a state-sport lock
@@ -319,6 +326,14 @@ export async function getStateSportLocks(db) {
     return results;
 }
 
+// Get all sports
+export async function getSports(db) {
+    if (!db) throw new Error("Database connection is required");
+    const sql = `SELECT sport_key, name FROM sports`;
+    const { results } = await db.prepare(sql).all();
+    return results;
+}
+
 // Export routes for local Wrangler testing (not used in production Worker)
 export default {
     async fetch(request, env) {
@@ -328,7 +343,7 @@ export default {
         const state = url.searchParams.get("state");
         const sport = url.searchParams.get("sport");
         switch (pathname) {
-            case "/":
+            case "/schema":
                 if (!tableName) return new Response(JSON.stringify({ error: "Table name is required" }), {
                     status: 400,
                     headers: { "Content-Type": "application/json" },
@@ -379,6 +394,19 @@ export default {
                         headers: { "Content-Type": "application/json" },
                     });
                 }
+            case "/initStateSport":
+                try {
+                    await initStateSport(env.DB);
+                    return new Response(JSON.stringify({ success: true }), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                } catch (err) {
+                    console.error(err);
+                    return new Response(JSON.stringify({ error: err.message }), {
+                        status: 500,
+                        headers: { "Content-Type": "application/json" },
+                    });
+                }
             case "/addStateSportLock":
                 if (!state || !sport) return new Response(JSON.stringify({ error: "State and sport are required" }), {
                     status: 400,
@@ -413,10 +441,23 @@ export default {
                         headers: { "Content-Type": "application/json" },
                     });
                 }
-            case "/getStateSportLocks":
+            case "/stateSportLocks":
                 try {
                     const locks = await getStateSportLocks(env.DB);
                     return new Response(JSON.stringify(locks), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                } catch (err) {
+                    console.error(err);
+                    return new Response(JSON.stringify({ error: err.message }), {
+                        status: 500,
+                        headers: { "Content-Type": "application/json" },
+                    });
+                }
+            case "/sports":
+                try {
+                    const sports = await getSports(env.DB);
+                    return new Response(JSON.stringify(sports), {
                         headers: { "Content-Type": "application/json" },
                     });
                 } catch (err) {
