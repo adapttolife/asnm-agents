@@ -300,6 +300,7 @@ export async function initStateSport(db) {
             await db.prepare(insertSql).bind(state, sport.name).run();
         }
     }
+    return true;
 }
 
 // Add a state-sport lock
@@ -310,6 +311,7 @@ export async function addStateSportLock(state, sport, db) {
     await db.prepare(insertSql).bind(state, sport).run();
     const updateSql = `UPDATE state_sport SET locked = 1 WHERE state = ? AND sport = ?`;
     await db.prepare(updateSql).bind(state, sport).run();
+    return true;
 }
 
 // Remove a state-sport lock
@@ -318,6 +320,7 @@ export async function removeStateSportLock(state, sport, db) {
     if (!db) throw new Error("Database connection is required");
     const updateSql = `UPDATE state_sport SET locked = 0, last_scraped_at = ? WHERE state = ? AND sport = ?`;
     await db.prepare(updateSql).bind(state, sport, new Date()).run();
+    return true;
 }
 
 // Get all state-sport locks
@@ -347,7 +350,26 @@ export async function validateOrganizationJson(json, db) {
     const valid = validate(json);
     if (!valid) {
         const errors = validate.errors.map(err => `${err.instancePath} ${err.message}`).join(', ');
-        throw new Error(`JSON validation failed: ${errors}`);
+        console.error(`JSON validation failed: ${errors}`);
+        return false;
+    }
+    return true;
+}
+
+// Push organization JSON to organizations table
+export async function pushOrganization(json, db, temp = false) {
+    if (!json) throw new Error("JSON is required");
+    if (!db) throw new Error("Database connection is required");
+    const validJson = validateOrganizationJson(json, db);
+    if (!validJson) return false;
+    const columns = Object.keys(json).join(", ");
+    const placeholders = Object.keys(json).map(() => "?").join(", ");
+    const values = Object.values(json);
+    const sql = `INSERT INTO organizations (${columns}) VALUES (${placeholders})`;
+    await db.prepare(sql).bind(...values).run();
+    if (temp) {
+        const deleteSql = `DELETE FROM organizations WHERE name = ? AND state = ? AND sport_key = ?`;
+        await db.prepare(deleteSql).bind(json.name, json.state, json.sport_key).run();
     }
     return true;
 }
@@ -489,6 +511,20 @@ export default {
                 try {
                     const json = await request.json();
                     await validateOrganizationJson(json, env.DB);
+                    return new Response(JSON.stringify({ success: true }), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                } catch (err) {
+                    console.error(err);
+                    return new Response(JSON.stringify({ error: err.message }), {
+                        status: 500,
+                        headers: { "Content-Type": "application/json" },
+                    });
+                }
+            case "/pushOrganization":
+                try {
+                    const json = await request.json();
+                    await pushOrganization(json, env.DB, true);
                     return new Response(JSON.stringify({ success: true }), {
                         headers: { "Content-Type": "application/json" },
                     });

@@ -165,4 +165,43 @@ describe("tableSchema via D1", () => {
         const result = await resp.json();
         expect(result.error).toBeDefined();
     }, 20000);
+
+    it("should successfully push a valid organization JSON to the database", async () => {
+        const validJson = {
+            name: 'ROyal Wheelers Basketball Team',
+            org_type: 'team',
+            sport: 'Wheelchair Basketball',
+            sport_key: 'basketball',
+            sports_json: ['basketball'],
+            website_url: 'https://www.example.com/royalwheelers',
+            email: 'info@example.com',
+            phone: '585-555-1234',
+            city: 'Rochester',
+            state: 'NY',
+            state_name: 'New York',
+            zip: '14604',
+            country: 'USA',
+            lat: 43.1566,
+            lng: -77.6088,
+            geo_precision: 'city',
+            description: 'Adaptive basketball team in Rochester NY.',
+            cost_note: null,
+            equipment_provided: 1,
+            ages: 'All ages',
+            data_quality_rating: 'high',
+            primary_data_source: 'web',
+            verification_status: 'verified',
+            verification_method: 'manual',
+            status: 'active',
+            is_public: 1
+        };
+        const resp = await worker.fetch("/pushOrganization", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(validJson),
+        });
+        expect(resp.status).toBe(200);
+        const result = await resp.json();
+        expect(result.success).toBe(true);
+    }, 20000);
 });
