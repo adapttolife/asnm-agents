@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 // Convert SQLite type to JSON type
 function sqliteTypeToJsonType(declaredType = "") {
     const type = declaredType.toUpperCase();
@@ -334,6 +336,22 @@ export async function getSports(db) {
     return results;
 }
 
+// Validate JSON against schema
+export async function validateOrganizationJson(json, db) {
+    if (!json) throw new Error("JSON is required");
+    if (!db) throw new Error("Database connection is required");
+    const schema = await fs.promises.readFile('schema.json', 'utf-8');
+    const Ajv = (await import('ajv')).default;
+    const ajv = new Ajv({ allErrors: true, strict: false });
+    const validate = ajv.compile(JSON.parse(schema));
+    const valid = validate(json);
+    if (!valid) {
+        const errors = validate.errors.map(err => `${err.instancePath} ${err.message}`).join(', ');
+        throw new Error(`JSON validation failed: ${errors}`);
+    }
+    return true;
+}
+
 // Export routes for local Wrangler testing (not used in production Worker)
 export default {
     async fetch(request, env) {
@@ -458,6 +476,20 @@ export default {
                 try {
                     const sports = await getSports(env.DB);
                     return new Response(JSON.stringify(sports), {
+                        headers: { "Content-Type": "application/json" },
+                    });
+                } catch (err) {
+                    console.error(err);
+                    return new Response(JSON.stringify({ error: err.message }), {
+                        status: 500,
+                        headers: { "Content-Type": "application/json" },
+                    });
+                }
+            case "/validateOrganizationJson":
+                try {
+                    const json = await request.json();
+                    await validateOrganizationJson(json, env.DB);
+                    return new Response(JSON.stringify({ success: true }), {
                         headers: { "Content-Type": "application/json" },
                     });
                 } catch (err) {

@@ -110,4 +110,59 @@ describe("tableSchema via D1", () => {
         expect(sports).toBeInstanceOf(Array);
         expect(sports.length).toBeGreaterThanOrEqual(0);
     }, 20000);
+
+    it("should validate JSON against the schema", async () => {
+        const validJson = {
+            name: 'ROyal Wheelers Basketball Team',
+            org_type: 'team',
+            sport: 'Wheelchair Basketball',
+            sport_key: 'basketball',
+            sports_json: ['basketball'],
+            website_url: 'https://www.example.com/royalwheelers',
+            email: 'info@example.com',
+            phone: '585-555-1234',
+            city: 'Rochester',
+            state: 'NY',
+            state_name: 'New York',
+            zip: '14604',
+            country: 'USA',
+            lat: 43.1566,
+            lng: -77.6088,
+            geo_precision: 'city',
+            description: 'Adaptive basketball team in Rochester NY.',
+            cost_note: null,
+            equipment_provided: 1,
+            ages: 'All ages',
+            data_quality_rating: 'high',
+            primary_data_source: 'web',
+            verification_status: 'verified',
+            verification_method: 'manual',
+            status: 'active',
+            is_public: 1
+        };
+        const resp = await worker.fetch("/validateOrganizationJson", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(validJson),
+        });
+        expect(resp.status).toBe(200);
+        const result = await resp.json();
+        expect(result.success).toBe(true);
+    }, 20000);
+
+    it("should fail validation for invalid JSON", async () => {
+        const invalidJson = {
+            name: 'Invalid Organization',
+            org_type: 123, // Invalid type
+            sport: 'Basketball',
+        };
+        const resp = await worker.fetch("/validateOrganizationJson", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(invalidJson),
+        });
+        expect(resp.status).toBe(400);
+        const result = await resp.json();
+        expect(result.error).toBeDefined();
+    }, 20000);
 });
