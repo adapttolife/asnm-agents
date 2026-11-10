@@ -33,19 +33,19 @@ Access to Cloudflare Workers is required to run this project. You'll need a free
 
 ## Plan
 
-1. Manually get the database schema.
-   1. Fetches the latest sports and organizations table schema.
-   2. Transform the schema into a JSON schema format.
-   3. Output the JSON schema to `schema.json`.
-   4. Prune the generated schema to only include the properties that Gemini should fill.
+1. Manually get the database schema. ✅
+   1. Fetches the latest sports and organizations table schema. ✅
+   2. Transform the schema into a JSON schema format. ✅
+   3. Output the JSON schema to `schema.json`. ✅
+   4. Prune the generated schema to only include the properties that Gemini should fill. ✅
 2. Controller runs every minute.
    1. Fetches latest `schema.json`.
    2. Repeat 2x.
       1. Finds a sport-state pair that is not locked and has not been scraped recently.
       2. Creates a lock for the sport-state pair.
-      3. Initiates the scrape.
-      4. Unlocks the sport-state pair after scraping is complete.
+      3. Fetches the organizations in the table matching the sport-state pair.
+      4. Initiates the scrape.
+      5. Push the new organizations to the database.
+      6. Unlocks the sport-state pair after scraping is complete.
 3. Scraper runs when initiated.
-   1. Fetches the organizations in the table matching the sport-state pair.
-   2. Search for organizations in the state related to the sport that are not already scraped using Gemini.
-   3. Push the new organizations to the database.
+   1. Search for organizations in the state related to the sport that are not already scraped using Gemini.
