@@ -117,9 +117,10 @@ async function main() {
             if (!effective.website_url && site.websiteUrl) patch.website_url ||= site.websiteUrl;
           }
         }
-        if (patch.address && (!row.lat || !row.lng)) {
+        const location = { ...effective, ...patch };
+        if (location.address && (row.lat === null || row.lng === null || !row.zip)) {
           const geocodeStartedAt = performance.now();
-          patch = { ...patch, ...await geocodeAddress({ ...effective, ...patch }) };
+          patch = { ...patch, ...await geocodeAddress(location) };
           await logger.info(`${row.name}: Census geocoder used in ${elapsed(geocodeStartedAt)}.`);
         }
         patch = emptyOnly(patch, row);

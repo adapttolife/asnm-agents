@@ -14,6 +14,7 @@ export async function geocodeAddress(patch) {
   return {
     lat: Number(match.coordinates.y),
     lng: Number(match.coordinates.x),
+    ...( /^\d{5}(?:-\d{4})?$/.test(String(match.addressComponents?.zip || "")) ? { zip: String(match.addressComponents.zip) } : {}),
     geo_precision: "address"
   };
 }

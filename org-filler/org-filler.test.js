@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { internalLinks, pageToMarkdown } from "./markdown.js";
 import { normalizePatch } from "./gemini.js";
 import { deterministicPatch } from "./normalize.js";
+import { geocodeAddress } from "./geocode.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -25,4 +26,14 @@ test("normalizes only allowed, valid organization fields", () => {
 test("fills deterministic sport and state names without overwriting existing values", () => {
   const patch = deterministicPatch({ sport: "Wheelchair Basketball", sport_key: null, state: "CO", state_name: null }, [{ name: "Wheelchair Basketball", sport_key: "basketball" }]);
   assert.deepEqual(patch, { sport_key: "basketball", state_name: "Colorado" });
+});
+
+test("collects a ZIP code from a confirmed Census address match", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ result: { addressMatches: [{ coordinates: { x: -73.675, y: 42.736 }, addressComponents: { zip: "12180" } }] } }), { status: 200 });
+  try {
+    assert.deepEqual(await geocodeAddress({ address: "1 Main St", city: "Troy", state: "NY" }), { lat: 42.736, lng: -73.675, zip: "12180", geo_precision: "address" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
