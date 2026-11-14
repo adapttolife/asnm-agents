@@ -42,3 +42,7 @@ Dry-run prints proposed patches without changing D1. Review that output before u
 The tool can fill only: `sport_key`, `website_url`, `email`, `phone`, `city`, `state`, `state_name`, `zip`, `address`, `lat`, `lng`, `geo_precision`, and `description`.
 
 The D1 guard is fixed to `asnm-db-staging`. To preserve consent and approval decisions, it never updates verification, visibility, contact-publicity, or claim fields.
+
+## Logs
+
+Every run writes the same timestamped messages to the console and `logs/org-filler-YYYY-MM-DD.log`. The log records the number of rows still needing filling, whether each crawler attempt succeeded, whether Chromium or open-websearch was used, Gemini and Census-geocoder use, each organization's elapsed time, and the total runtime.
