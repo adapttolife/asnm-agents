@@ -6,6 +6,7 @@ import { fillMissing, GeminiPool, normalizePatch } from "./gemini.js";
 import { geocodeAddress } from "./geocode.js";
 import { createLogger, formatDuration } from "./logger.js";
 import { deterministicPatch, missingFields } from "./normalize.js";
+import { createStatistics } from "./statistics.js";
 import { OpenWebSearch, searchQuery } from "./web-search.js";
 
 function options(argv) {
@@ -13,7 +14,12 @@ function options(argv) {
     const index = argv.indexOf(name);
     return index >= 0 ? argv[index + 1] || fallback : fallback;
   };
-  return { apply: argv.includes("--apply"), id: value("--id"), limit: Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2500)), help: argv.includes("--help") || argv.includes("-h") };
+  return {
+    apply: argv.includes("--apply"),
+    id: value("--id"),
+    limit: Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2500)),
+    help: argv.includes("--help") || argv.includes("-h")
+  };
 }
 
 function emptyOnly(patch, row) {
@@ -91,7 +97,12 @@ async function main() {
   if (args.help) return usage();
   const startedAt = performance.now();
   const logger = await createLogger();
+  const statistics = await createStatistics({
+    mode: args.apply ? "apply" : "dry-run",
+    environment: IS_PRODUCTION ? "production" : "staging"
+  });
   await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode for ${IS_PRODUCTION ? "production" : "staging"} (${DATABASE_NAME}, ${WRANGLER_CONFIG}, ${ENVIRONMENT_FILE}). Log file: ${logger.file}`);
+  await logger.info(`Statistics file: ${statistics.file}`);
   const [sportRows, rows] = await Promise.all([sports(), candidates(args.limit, args.id)]);
   await logger.info(`Rows that still need filling: ${rows.length}`);
   const search = new OpenWebSearch();
@@ -126,15 +137,18 @@ async function main() {
         patch = emptyOnly(patch, row);
         if (!Object.keys(patch).length) {
           summary.skipped++;
+          await statistics.skipped();
           await logger.info(`${row.name}: no supported empty fields could be filled. Completed in ${elapsed(rowStartedAt)}.`);
           continue;
         }
         await logger.info(JSON.stringify({ id: row.id, name: row.name, patch }));
         if (args.apply) await applyPatch(row.id, patch);
         summary.changed++;
+        await statistics.changed(row.name);
         await logger.info(`${row.name}: ${args.apply ? "applied" : "proposed"} patch completed in ${elapsed(rowStartedAt)}.`);
       } catch (error) {
         summary.failed++;
+        await statistics.failed();
         await logger.error(JSON.stringify({ id: row.id, name: row.name, error: error.message }));
         await logger.error(`${row.name}: failed after ${elapsed(rowStartedAt)}.`);
       }

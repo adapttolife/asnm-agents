@@ -55,3 +55,7 @@ To preserve consent and approval decisions, it never updates verification, visib
 ## Logs
 
 Every run writes the same timestamped messages to the console and `logs/org-filler-YYYY-MM-DD.log`. The log records the number of rows still needing filling, whether each crawler attempt succeeded, whether Chromium or open-websearch was used, Gemini and Census-geocoder use, each organization's elapsed time, and the total runtime.
+
+## Statistics
+
+Each process creates its own JSON file in `statistics/`. It is updated after every changed, skipped, or failed row and records the run mode, environment, changed and skipped counts, failure count, and the names of organizations with a proposed or applied change.

@@ -4,6 +4,10 @@ import { internalLinks, pageToMarkdown } from "./markdown.js";
 import { normalizePatch } from "./gemini.js";
 import { deterministicPatch } from "./normalize.js";
 import { geocodeAddress } from "./geocode.js";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createStatistics } from "./statistics.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -35,5 +39,20 @@ test("collects a ZIP code from a confirmed Census address match", async () => {
     assert.deepEqual(await geocodeAddress({ address: "1 Main St", city: "Troy", state: "NY" }), { lat: 42.736, lng: -73.675, zip: "12180", geo_precision: "address" });
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("persists per-run statistics after changed and skipped rows", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "org-filler-statistics-"));
+  try {
+    const statistics = await createStatistics({ mode: "apply", environment: "staging", directory });
+    await statistics.changed("Example Organization");
+    await statistics.skipped();
+    const stored = JSON.parse(await readFile(statistics.file, "utf8"));
+    assert.equal(stored.changed, 1);
+    assert.equal(stored.skipped, 1);
+    assert.deepEqual(stored.changedOrganizations, ["Example Organization"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });
