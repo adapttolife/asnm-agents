@@ -19,10 +19,9 @@ Install Node.js 20+ and Chromium, then install project dependencies:
 cd ~/asnm-agents/org-filler
 npm install
 cp .env.example .env
-npx wrangler login
 ```
 
-Set at least `GEMINI_API_KEY` in `.env`. Add further comma-separated keys in `GEMINI_API_KEYS`. If Chromium is not located at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, or `/usr/bin/google-chrome`, set `BROWSER_EXECUTABLE_PATH`.
+Set at least `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` in `.env`. Add further comma-separated Gemini keys in `GEMINI_API_KEYS`. The Cloudflare token replaces `wrangler login`, so runs continue after an interactive login expires. It needs the Account-level `D1:Edit` permission for the ASNM account. If Chromium is not located at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, or `/usr/bin/google-chrome`, set `BROWSER_EXECUTABLE_PATH`.
 
 `open-websearch` is installed with this project and starts as a temporary local HTTP service. Set `OPEN_WEBSEARCH_URL` only when it is already managed as a separate daemon.
 
