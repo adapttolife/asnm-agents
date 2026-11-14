@@ -1,75 +1,130 @@
 import "dotenv/config";
 import { applyPatch, candidates, sports } from "./database.js";
 import { FILLABLE_FIELDS } from "./config.js";
-import { batchOrganizations, configuredKeyCount, normalizeResearch, researchOrganizations } from "./gemini.js";
+import { scrapeWithBrowser } from "./browser.js";
+import { crawlSite } from "./crawler.js";
+import { fillMissing, GeminiPool, normalizePatch } from "./gemini.js";
 import { geocodeAddress } from "./geocode.js";
-import { searchOrganizations } from "./searlo.js";
-import { deterministicFields } from "./normalize.js";
+import { deterministicPatch, missingFields } from "./normalize.js";
+import { OpenWebSearch, searchQuery } from "./web-search.js";
 
 function options(argv) {
   const value = (name, fallback = "") => {
     const index = argv.indexOf(name);
-    return index >= 0 ? argv[index + 1] || fallback : fallback;
+    return (index >= 0) ? (argv[index + 1] || fallback) : fallback;
   };
   return {
     apply: argv.includes("--apply"),
-    help: argv.includes("--help") || argv.includes("-h"),
     id: value("--id"),
-    limit: Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2_500)),
-    model: value("--model") || undefined,
-    concurrency: Math.max(1, Math.min(Number(value("--concurrency", String(configuredKeyCount() || 1))) || 1, configuredKeyCount() || 1)),
+    limit: Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2500)),
+    help: argv.includes("--help") || argv.includes("-h"),
   };
 }
 
-function missingFields(row) {
-  return FILLABLE_FIELDS.filter((field) => row[field] === null || row[field] === "");
+function emptyOnly(patch, row) {
+  return Object.fromEntries(Object.entries(patch).filter(([field, value]) => FILLABLE_FIELDS.includes(field) && (value !== null) && (value !== undefined) && (value !== "") && ((row[field] === null) || (row[field] === ""))));
 }
 
-function emptyOnly(patch, row) {
-  return Object.fromEntries(Object.entries(patch).filter(([field, value]) =>
-    FILLABLE_FIELDS.includes(field) && value !== null && value !== undefined && value !== "" && (row[field] === null || row[field] === "")
-  ));
+async function browserFallback(url) {
+  try {
+    return await scrapeWithBrowser(url);
+  } catch (error) {
+    return { pages: [], error: error.message };
+  }
+}
+
+async function searchForSite(row, search) {
+  const results = await search.search(searchQuery(row));
+  for (const result of results) {
+    try {
+      return await crawlSite(result.url);
+    } catch {
+      const browser = await browserFallback(result.url);
+      if (browser.pages.length) return browser;
+    }
+  }
+  return { pages: [] };
+}
+
+async function collectSite(row, search) {
+  if (row.website_url) {
+    try {
+      return await crawlSite(row.website_url);
+    } catch {
+      const browser = await browserFallback(row.website_url);
+      if (browser.pages.length) return browser;
+    }
+  }
+  return searchForSite(row, search);
 }
 
 function usage() {
-  console.log("Usage: node index.js [--limit 2200] [--id organization-id] [--model gemini-3.5-flash-lite] [--concurrency 6] [--apply]");
-}
-
-async function savePatch(row, patch, args) {
-  if (patch.address && (row.lat === null || row.lng === null)) patch = { ...patch, ...await geocodeAddress({ ...row, ...patch }) };
-  patch = emptyOnly(patch, row);
-  if (!Object.keys(patch).length) return false;
-  console.log(JSON.stringify({ id: row.id, name: row.name, patch }));
-  if (args.apply) await applyPatch(row.id, patch);
-  return true;
+  console.log("Usage: node index.js [--limit 10] [--id organization-id] [--apply]");
 }
 
 async function main() {
   const args = options(process.argv.slice(2));
   if (args.help) return usage();
-  const sportRows = await sports();
-  const rows = await candidates(args.limit, args.id);
-  const jobs = rows.map((row) => ({ row, patch: deterministicFields(row, sportRows) }));
-  const researchJobs = jobs.filter(({ row, patch }) => missingFields({ ...row, ...patch }).some((field) => field !== "sport_key" && field !== "state_name"));
-  const sourcesById = await searchOrganizations(researchJobs.map(({ row }) => row));
-  const researchRows = researchJobs.map(({ row }) => ({ ...row, sources: sourcesById.get(row.id) || [] }));
-  const batches = batchOrganizations(researchRows, sportRows);
-  let changed = 0;
-  for (const { row, patch } of jobs.filter((job) => !researchJobs.includes(job))) if (await savePatch(row, patch, args)) changed++;
-  let nextBatch = 0;
-  const worker = async () => {
-    while (nextBatch < batches.length) {
-      const batch = batches[nextBatch++];
-      const researched = await researchOrganizations(batch, sportRows, args.model);
-      for (const row of batch) {
-        const job = researchJobs.find((candidate) => candidate.row.id === row.id);
-        const patch = { ...job.patch, ...normalizeResearch(researched.get(row.id) || {}, sportRows) };
-        if (await savePatch(row, patch, args)) changed++;
+  const [sportRows, rows] = await Promise.all([sports(), candidates(args.limit, args.id)]);
+  const search = new OpenWebSearch();
+  const pool = new GeminiPool();
+  const summary = {
+    mode: args.apply ? "apply" : "dry-run",
+    candidates: rows.length,
+    researched: 0,
+    changed: 0,
+    skipped: 0,
+    failed: 0
+  };
+  try {
+    await search.start();
+    for (const row of rows) {
+      try {
+        const deterministic = deterministicPatch(row, sportRows);
+        const effective = { ...row, ...deterministic };
+        const missing = FILLABLE_FIELDS.filter((field) => missingFields(effective).includes(field));
+        let patch = { ...deterministic };
+        if (missing.length) {
+          const site = await collectSite(effective, search);
+          if (site.pages.length) {
+            summary.researched++;
+            const found = await fillMissing(pool, effective, missing, sportRows, site.pages);
+            patch = {
+              ...patch,
+              ...normalizePatch(found, sportRows)
+            };
+            if (!effective.website_url && site.websiteUrl) patch.website_url ||= site.websiteUrl;
+          }
+        }
+        if (patch.address && (!row.lat || !row.lng)) patch = {
+          ...patch,
+          ...await geocodeAddress({ ...effective, ...patch })
+        
+        };
+        patch = emptyOnly(patch, row);
+        if (!Object.keys(patch).length) {
+          summary.skipped++;
+          continue;
+        }
+        console.log(JSON.stringify({
+          id: row.id,
+          name: row.name, patch
+        }));
+        if (args.apply) await applyPatch(row.id, patch);
+        summary.changed++;
+      } catch (error) {
+        summary.failed++;
+        console.error(JSON.stringify({
+          id: row.id,
+          name: row.name,
+          error: error.message
+        }));
       }
     }
-  };
-  await Promise.all(Array.from({ length: Math.min(args.concurrency, batches.length) }, worker));
-  console.log(JSON.stringify({ mode: args.apply ? "apply" : "dry-run", candidates: rows.length, researchBatches: batches.length, changed, concurrency: args.concurrency }));
+  } finally {
+    await search.close();
+  }
+  console.log(JSON.stringify(summary));
 }
 
 main().catch((error) => {

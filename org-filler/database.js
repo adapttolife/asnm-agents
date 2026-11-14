@@ -1,37 +1,28 @@
-import { exec as execCallback } from "node:child_process";
+import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DATABASE_NAME, FILLABLE_FIELDS } from "./config.js";
 
-const exec = promisify(execCallback);
+const execFile = promisify(execFileCallback);
+const empty = (column) => `NULLIF(TRIM(COALESCE(${column}, '')), '') IS NULL`;
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
-const nonempty = (column, value) => `COALESCE(NULLIF(TRIM(${column}), ''), ${quote(value)})`;
 
-function shellQuote(value) {
-  const text = String(value);
-  if (process.platform === "win32") return `"${text.replaceAll("\"", "\\\"")}"`;
-  return `'${text.replaceAll("'", "'\\''")}'`;
-}
-
-function parseJson(stdout) {
+function parseWranglerJson(stdout) {
   const start = stdout.indexOf("[");
   if (start < 0) throw new Error(`Wrangler did not return JSON: ${stdout}`);
-  return JSON.parse(stdout.slice(start));
+  const payload = JSON.parse(stdout.slice(start));
+  if (!payload[0]?.success) throw new Error(JSON.stringify(payload));
+  return payload[0].results || [];
 }
 
 async function execute(sql) {
-  if (DATABASE_NAME !== "asnm-db-staging") throw new Error("org-filler can only target asnm-db-staging");
-  const command = `npx wrangler d1 execute ${DATABASE_NAME} --remote --json --command ${shellQuote(sql)}`;
-  let stdout;
-  let stderr;
+  if ((DATABASE_NAME !== "asnm-db-staging") && (process.env.NODE_ENV !== "production")) throw new Error("org-filler is restricted to asnm-db-staging");
   try {
-    ({ stdout, stderr } = await exec(command, { maxBuffer: 8 * 1024 * 1024 }));
+    const { stdout, stderr } = await execFile("npx", ["wrangler", "d1", "execute", DATABASE_NAME, "--remote", "--json", "--command", sql], { maxBuffer: 16 * 1024 * 1024 });
+    if (stderr && !stdout) throw new Error(stderr);
+    return parseWranglerJson(stdout);
   } catch (error) {
-    throw new Error([error.message, error.stdout, error.stderr].filter(Boolean).join("`n"), { cause: error });
+    throw new Error([error.message, error.stdout, error.stderr].filter(Boolean).join("\n"), { cause: error });
   }
-  if (stderr && !stdout) throw new Error(stderr);
-  const payload = parseJson(stdout);
-  if (!payload[0]?.success) throw new Error(JSON.stringify(payload));
-  return payload[0].results || [];
 }
 
 export async function sports() {
@@ -39,17 +30,12 @@ export async function sports() {
 }
 
 export async function candidates(limit, id = "") {
-  const where = id ? `id = ${quote(id)}` : `(${FILLABLE_FIELDS.map((field) => ((field === "lat") || (field === "lng")) ? `${field} IS NULL` : `NULLIF(TRIM(COALESCE(${field}, '')), '') IS NULL`).join(" OR ")})`;
-  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE ${where} ORDER BY updated_at ASC, name COLLATE NOCASE LIMIT ${Number(limit)}`);
+  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE verification_status = 'verified' AND status = 'active' ${id ? `AND id = ${quote(id)}` : ""} AND (${FILLABLE_FIELDS.map((field) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")}) ORDER BY updated_at ASC, name COLLATE NOCASE LIMIT ${Math.max(1, Number(limit) || 1)}`);
 }
 
 export async function applyPatch(id, patch) {
   const entries = Object.entries(patch).filter(([field, value]) => FILLABLE_FIELDS.includes(field) && (value !== null) && (value !== undefined) && (value !== ""));
   if (!entries.length) return false;
-  const sets = entries.map(([field, value]) => {
-    if ((field === "lat") || (field === "lng")) return `${field} = COALESCE(${field}, ${Number(value)})`;
-    return `${field} = ${nonempty(field, value)}`;
-  });
-  await execute(`UPDATE organizations SET ${sets.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ${quote(id)}`);
+  await execute(`UPDATE organizations SET ${entries.map(([field, value]) => ["lat", "lng"].includes(field) ? `${field} = COALESCE(${field}, ${Number(value)})` : `${field} = COALESCE(NULLIF(TRIM(${field}), ''), ${quote(value)})`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ${quote(id)} AND verification_status = 'verified' AND status = 'active' AND (${entries.map(([field]) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")})`);
   return true;
 }

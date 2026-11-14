@@ -1,41 +1,45 @@
 # ASNM organization filler
 
-`org-filler` enriches existing rows in `asnm-db-staging` only. It never creates rows or overwrites non-empty values. It identifies incomplete organization records, uses Searlo search results as evidence for Gemini, validates the response, geocodes only a confirmed street address through the Census geocoder, and writes only fields that remain empty.
+`org-filler` runs on the Raspberry Pi and fills missing information for existing, administrator-verified organizations in `asnm-db-staging`. It does not create organizations, change filled values, or process unverified or inactive rows.
 
-## Setup
+## Flow
+
+1. Query verified, active organizations with one or more empty supported fields.
+2. For an existing `website_url`, politely crawl up to 20 same-site HTML pages. Cheerio removes non-content markup and Turndown converts page content to Markdown.
+3. If HTTP crawling the known URL fails, open the URL in Chromium through Playwright.
+4. If no usable site is available, use the local `open-websearch` daemon to find a new public URL, waiting at least five seconds between searches. Crawl its first usable result.
+5. Send only the empty field names, organization context, permitted sport keys, and collected Markdown to Gemini. Multiple Gemini keys rotate and are rate-limited independently.
+6. Validate the structured JSON response, geocode a confirmed U.S. street address when appropriate, and write only fields that are still empty. `--apply` is required to write.
+
+## Raspberry Pi setup
+
+Install Node.js 20+ and Chromium, then install project dependencies:
 
 ```sh
-cd org-filler
+cd ~/asnm-agents/org-filler
 npm install
-copy .env.example .env
+cp .env.example .env
+npx wrangler login
 ```
 
-Set `GEMINI_API_KEY` and `SEARLO_API_KEY` in `.env`. To use multiple Google Cloud projects, set one Gemini key as `GEMINI_API_KEY` and the other five as comma-separated values in `GEMINI_API_KEYS`. Set the second Searlo key in `SEARLO_API_KEYS`.
+Set at least `GEMINI_API_KEY` in `.env`. Add further comma-separated keys in `GEMINI_API_KEYS`. If Chromium is not located at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, or `/usr/bin/google-chrome`, set `BROWSER_EXECUTABLE_PATH`.
 
-## Web lookup
-
-The tool groups organizations into batches of up to ten and sends each batch to Searlo's web-search endpoint. It rotates configured Searlo keys between batches. Gemini receives the first five results' titles, URLs, and snippets for each organization, and accepts a field only when the associated evidence URL is one of those search results.
+`open-websearch` is installed with this project and starts as a temporary local HTTP service. Set `OPEN_WEBSEARCH_URL` only when it is already managed as a separate daemon.
 
 ## Run
 
-Dry-run is the default and prints proposed patches only:
-
 ```sh
+npm test
 npm run dry-run
 node index.js --limit 25
 node index.js --id <organization-id>
-```
-
-Apply reviewed results:
-
-```sh
 node index.js --limit 25 --apply
 ```
 
-The default model is `gemini-3.5-flash-lite`. Gemini requests are paced at 15 requests per minute, capped at 250,000 estimated input tokens per rolling minute, and stop at 500 requests per Pacific-calendar day for each configured Google Cloud project. Six projects provide combined capacity of 90 requests per minute, 1.5 million input tokens per minute, and 3,000 requests per day.
+Dry-run prints proposed patches without changing D1. Review that output before using `--apply`.
 
-The tool is hard-coded to `asnm-db-staging`. It fills only `sport_key`, website, public email and phone, city, state, state name, ZIP, address, latitude, longitude, geo precision, and description. Unknown or unsupported values stay empty.
+## Fields
 
-## Safeguards
+The tool can fill only: `sport_key`, `website_url`, `email`, `phone`, `city`, `state`, `state_name`, `zip`, `address`, `lat`, `lng`, `geo_precision`, and `description`.
 
-Review a dry run before using `--apply`. The tool never creates organizations, never replaces a populated field, and its database module rejects any target other than `asnm-db-staging`. `wrangler` must already be authenticated for the Cloudflare account that owns that database. Gemini is used only for fields that cannot be derived from the existing `sport` or `state` value.
+The D1 guard is fixed to `asnm-db-staging`. To preserve consent and approval decisions, it never updates verification, visibility, contact-publicity, or claim fields.

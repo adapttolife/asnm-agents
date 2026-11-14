@@ -1,0 +1,1 @@
+export default { fetch() { return new Response("org-filler only uses Wrangler D1 commands"); } };
