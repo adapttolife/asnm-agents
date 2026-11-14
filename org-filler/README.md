@@ -1,6 +1,6 @@
 # ASNM organization filler
 
-`org-filler` runs on the Raspberry Pi and fills missing information for existing, administrator-verified organizations in `asnm-db-staging`. It does not create organizations, change filled values, or process unverified or inactive rows.
+`org-filler` fills missing information for existing, administrator-verified organizations. It never creates organizations, changes filled values, or processes unverified or inactive rows.
 
 ## Flow
 
@@ -19,13 +19,16 @@ Install Node.js 20+ and Chromium, then install project dependencies:
 cd ~/asnm-agents/org-filler
 npm install
 cp .env.example .env
+cp prod.env.example prod.env
 ```
 
-Set at least `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` in `.env`. Add further comma-separated Gemini keys in `GEMINI_API_KEYS`. The Cloudflare token replaces `wrangler login`, so runs continue after an interactive login expires. It needs the Account-level `D1:Edit` permission for the ASNM account. If Chromium is not located at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, or `/usr/bin/google-chrome`, set `BROWSER_EXECUTABLE_PATH`.
+Set `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` in both environment files. Add further comma-separated Gemini keys in `GEMINI_API_KEYS`. The Cloudflare token replaces `wrangler login`, so runs continue after an interactive login expires. It needs the Account-level `D1:Edit` permission for the ASNM account. If Chromium is not located at `/usr/bin/chromium`, `/usr/bin/chromium-browser`, or `/usr/bin/google-chrome`, set `BROWSER_EXECUTABLE_PATH`.
 
 `open-websearch` is installed with this project and starts as a temporary local HTTP service. Set `OPEN_WEBSEARCH_URL` only when it is already managed as a separate daemon.
 
-## Run
+## Targets and commands
+
+Staging uses `.env`, `wrangler.jsonc`, and `asnm-db-staging`:
 
 ```sh
 npm test
@@ -35,13 +38,19 @@ node index.js --id <organization-id>
 node index.js --limit 25 --apply
 ```
 
-Dry-run prints proposed patches without changing D1. Review that output before using `--apply`.
+Production uses `prod.env`, `wrangler.prod.jsonc`, and `asnm-db`:
+
+```sh
+npm run prod
+```
+
+`npm run prod` includes `--apply`, so it writes approved values to production. Every run fails before accessing D1 if its selected environment file or Wrangler configuration file is missing, or if the environment file names the wrong database.
 
 ## Fields
 
 The tool can fill only: `sport_key`, `website_url`, `email`, `phone`, `city`, `state`, `state_name`, `zip`, `address`, `lat`, `lng`, `geo_precision`, and `description`.
 
-The D1 guard is fixed to `asnm-db-staging`. To preserve consent and approval decisions, it never updates verification, visibility, contact-publicity, or claim fields.
+To preserve consent and approval decisions, it never updates verification, visibility, contact-publicity, or claim fields.
 
 ## Logs
 

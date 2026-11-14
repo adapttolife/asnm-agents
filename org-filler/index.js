@@ -1,6 +1,5 @@
-import "dotenv/config";
 import { applyPatch, candidates, sports } from "./database.js";
-import { FILLABLE_FIELDS } from "./config.js";
+import { DATABASE_NAME, ENVIRONMENT_FILE, FILLABLE_FIELDS, IS_PRODUCTION, WRANGLER_CONFIG } from "./config.js";
 import { scrapeWithBrowser } from "./browser.js";
 import { crawlSite } from "./crawler.js";
 import { fillMissing, GeminiPool, normalizePatch } from "./gemini.js";
@@ -84,7 +83,7 @@ async function collectSite(row, search) {
 }
 
 function usage() {
-  console.log("Usage: node index.js [--limit 10] [--id organization-id] [--apply]");
+  console.log("Usage: node index.js [--prod] [--limit 10] [--id organization-id] [--apply]");
 }
 
 async function main() {
@@ -92,7 +91,7 @@ async function main() {
   if (args.help) return usage();
   const startedAt = performance.now();
   const logger = await createLogger();
-  await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode. Log file: ${logger.file}`);
+  await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode for ${IS_PRODUCTION ? "production" : "staging"} (${DATABASE_NAME}, ${WRANGLER_CONFIG}, ${ENVIRONMENT_FILE}). Log file: ${logger.file}`);
   const [sportRows, rows] = await Promise.all([sports(), candidates(args.limit, args.id)]);
   await logger.info(`Rows that still need filling: ${rows.length}`);
   const search = new OpenWebSearch();

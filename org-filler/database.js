@@ -1,6 +1,6 @@
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
-import { DATABASE_NAME, FILLABLE_FIELDS } from "./config.js";
+import { DATABASE_NAME, FILLABLE_FIELDS, IS_PRODUCTION, WRANGLER_CONFIG } from "./config.js";
 
 const execFile = promisify(execFileCallback);
 const empty = (column) => `NULLIF(TRIM(COALESCE(${column}, '')), '') IS NULL`;
@@ -15,9 +15,10 @@ function parseWranglerJson(stdout) {
 }
 
 async function execute(sql) {
-  if ((DATABASE_NAME !== "asnm-db-staging") && (process.env.NODE_ENV !== "production")) throw new Error("org-filler is restricted to asnm-db-staging");
+  if (!IS_PRODUCTION && DATABASE_NAME !== "asnm-db-staging") throw new Error("Staging org-filler must target asnm-db-staging");
+  if (IS_PRODUCTION && DATABASE_NAME !== "asnm-db") throw new Error("Production org-filler must target asnm-db");
   try {
-    const { stdout, stderr } = await execFile("npx", ["wrangler", "d1", "execute", DATABASE_NAME, "--remote", "--json", "--command", sql], { maxBuffer: 16 * 1024 * 1024 });
+    const { stdout, stderr } = await execFile("npx", ["wrangler", "d1", "execute", DATABASE_NAME, "--config", WRANGLER_CONFIG, "--remote", "--json", "--command", sql], { maxBuffer: 16 * 1024 * 1024 });
     if (stderr && !stdout) throw new Error(stderr);
     return parseWranglerJson(stdout);
   } catch (error) {

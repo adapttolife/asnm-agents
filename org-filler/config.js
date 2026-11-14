@@ -1,4 +1,20 @@
-export const DATABASE_NAME = process.env.DATABASE_NAME || "asnm-db-staging";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { config as loadEnvironment } from "dotenv";
+
+export const IS_PRODUCTION = process.argv.includes("--prod");
+export const ENVIRONMENT_FILE = IS_PRODUCTION ? "prod.env" : ".env";
+export const WRANGLER_CONFIG = IS_PRODUCTION ? "wrangler.prod.jsonc" : "wrangler.jsonc";
+export const DATABASE_NAME = IS_PRODUCTION ? "asnm-db" : "asnm-db-staging";
+
+const environmentPath = resolve(process.cwd(), ENVIRONMENT_FILE);
+const wranglerPath = resolve(process.cwd(), WRANGLER_CONFIG);
+const applicationRun = /(?:^|[\\/])index\.js$/.test(process.argv[1] || "");
+
+if (applicationRun && !existsSync(environmentPath)) throw new Error(`Missing ${ENVIRONMENT_FILE}. Copy the matching example file and configure its secrets before running org-filler.`);
+if (applicationRun && !existsSync(wranglerPath)) throw new Error(`Missing ${WRANGLER_CONFIG}. org-filler cannot select its D1 target.`);
+if (existsSync(environmentPath)) loadEnvironment({ path: environmentPath, override: false, quiet: true });
+if (process.env.DATABASE_NAME && process.env.DATABASE_NAME !== DATABASE_NAME) throw new Error(`${ENVIRONMENT_FILE} targets ${process.env.DATABASE_NAME}, but this run requires ${DATABASE_NAME}.`);
 export const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 export const FILLABLE_FIELDS = [
   "sport_key",

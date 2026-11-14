@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dry-run": "node index.js --limit 1",
-    "test": "node --test"
+    "test": "node --test",
+    "prod": "node index.js --prod --apply"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",
