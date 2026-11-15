@@ -31,7 +31,7 @@ export async function sports() {
 }
 
 export async function candidates(limit, id = "") {
-  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE verification_status = 'verified' AND status = 'active' ${id ? `AND id = ${quote(id)}` : ""} AND (${FILLABLE_FIELDS.map((field) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")}) ORDER BY updated_at ASC, name COLLATE NOCASE LIMIT ${Math.max(1, Number(limit) || 1)}`);
+  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE verification_status = 'verified' AND status = 'active' ${id ? `AND id = ${quote(id)}` : ""} AND (${FILLABLE_FIELDS.map((field) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")}) ORDER BY updated_at ASC, name COLLATE NOCASE${limit === Infinity ? "" : ` LIMIT ${Math.max(1, Number(limit) || 1)}`}`);
 }
 
 export async function applyPatch(id, patch) {
