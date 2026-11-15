@@ -1,8 +1,8 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-function datePart(date) {
-  return date.toISOString().slice(0, 10);
+function runId(date = new Date()) {
+  return date.toISOString().replace(/[:.]/g, "-");
 }
 
 function line(level, message) {
@@ -15,9 +15,8 @@ export function formatDuration(milliseconds) {
   return `${Math.floor(milliseconds / 60_000)}m ${((milliseconds % 60_000) / 1000).toFixed(1)}s`;
 }
 
-export async function createLogger() {
-  const directory = join(process.cwd(), "logs");
-  const file = join(directory, `org-filler-${datePart(new Date())}.log`);
+export async function createLogger(directory = join(process.cwd(), "logs")) {
+  const file = join(directory, `org-filler-${runId(new Date())}-${process.pid}.log`);
   await mkdir(directory, { recursive: true });
   const write = async (level, message) => {
     const output = line(level, message);

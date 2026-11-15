@@ -8,6 +8,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createStatistics } from "./statistics.js";
+import { createLogger } from "./logger.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -52,6 +53,18 @@ test("persists per-run statistics after changed and skipped rows", async () => {
     assert.equal(stored.changed, 1);
     assert.equal(stored.skipped, 1);
     assert.deepEqual(stored.changedOrganizations, ["Example Organization"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("writes each process logger to its own timestamped file", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "org-filler-logs-"));
+  try {
+    const logger = await createLogger(directory);
+    await logger.info("Run started");
+    assert.match(logger.file, /org-filler-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-\d+\.log$/);
+    assert.match(await readFile(logger.file, "utf8"), /INFO Run started/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

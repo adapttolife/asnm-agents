@@ -54,7 +54,7 @@ To preserve consent and approval decisions, it never updates verification, visib
 
 ## Logs
 
-Every run writes the same timestamped messages to the console and `logs/org-filler-YYYY-MM-DD.log`. The log records the number of rows still needing filling, whether each crawler attempt succeeded, whether Chromium or open-websearch was used, Gemini and Census-geocoder use, each organization's elapsed time, and the total runtime.
+Each process writes the same timestamped messages to the console and its own `logs/org-filler-YYYY-MM-DDTHH-MM-SS-mmmZ-PID.log` file. The log records the number of rows still needing filling, whether each crawler attempt succeeded, whether Chromium or open-websearch was used, Gemini and Census-geocoder use, each organization's elapsed time, and the total runtime.
 
 ## Statistics
 
