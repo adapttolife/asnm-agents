@@ -17,7 +17,7 @@ function options(argv) {
   return {
     apply: argv.includes("--apply"),
     id: value("--id"),
-    limit: Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2500)),
+    limit: (Number(value("--limit", "10")) === 0) ? Infinity : Math.max(1, Math.min(Number(value("--limit", "10")) || 10, 2500)),
     help: argv.includes("--help") || argv.includes("-h")
   };
 }
@@ -104,7 +104,7 @@ async function main() {
   await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode for ${IS_PRODUCTION ? "production" : "staging"} (${DATABASE_NAME}, ${WRANGLER_CONFIG}, ${ENVIRONMENT_FILE}). Log file: ${logger.file}`);
   await logger.info(`Statistics file: ${statistics.file}`);
   const [sportRows, rows] = await Promise.all([sports(), candidates(args.limit, args.id)]);
-  await logger.info(`Rows that still need filling: ${rows.length}`);
+  await logger.info(`Rows that still need filling: ${rows.length}/${args.limit}`);
   const search = new OpenWebSearch();
   const pool = new GeminiPool();
   const summary = { mode: args.apply ? "apply" : "dry-run", candidates: rows.length, researched: 0, changed: 0, skipped: 0, failed: 0 };
