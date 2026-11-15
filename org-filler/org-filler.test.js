@@ -9,6 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createStatistics } from "./statistics.js";
 import { createLogger } from "./logger.js";
+import { browserExecutableCandidates } from "./browser.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -68,4 +69,8 @@ test("writes each process logger to its own timestamped file", async () => {
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("tries the configured Chromium executable before fallbacks", () => {
+  assert.deepEqual(browserExecutableCandidates("/opt/chromium"), ["/opt/chromium", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/google-chrome"]);
 });

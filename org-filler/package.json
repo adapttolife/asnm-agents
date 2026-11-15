@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dry-run": "node index.js --limit 1",
     "test": "node --test",
-    "prod": "node index.js --prod --apply --limit 0"
+    "prod": "node index.js --prod --apply --limit 0",
+    "staging": "node index.js --apply --limit 0"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",
