@@ -34,6 +34,7 @@ export const FILLABLE_FIELDS = [
 export const MAX_SITE_PAGES = Number(process.env.MAX_SITE_PAGES || 20);
 export const MAX_MARKDOWN_CHARS = Number(process.env.MAX_MARKDOWN_CHARS || 100000);
 export const SITE_REQUEST_INTERVAL_MS = Number(process.env.SITE_REQUEST_INTERVAL_MS || 1000);
+export const MAX_CRAWL_DURATION_MS = Math.max(1_000, Number(process.env.MAX_CRAWL_DURATION_MS) || 60_000);
 export const SEARCH_INTERVAL_MS = Number(process.env.SEARCH_INTERVAL_MS || 5000);
 export const GEMINI_REQUESTS_PER_MINUTE = Number(process.env.GEMINI_REQUESTS_PER_MINUTE || 10);
 export const GEMINI_REQUESTS_PER_DAY = Number(process.env.GEMINI_REQUESTS_PER_DAY || 500);

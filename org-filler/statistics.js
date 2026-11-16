@@ -17,7 +17,8 @@ export async function createStatistics({ mode, environment, directory = join(pro
     changed: 0,
     skipped: 0,
     failed: 0,
-    changedOrganizations: []
+    changedOrganizations: [],
+    processing: null
   };
 
   const save = async () => {
@@ -31,14 +32,33 @@ export async function createStatistics({ mode, environment, directory = join(pro
     changed: async (organization) => {
       statistics.changed++;
       statistics.changedOrganizations.push(organization);
+      statistics.processing = null;
       await save();
     },
     skipped: async () => {
       statistics.skipped++;
+      statistics.processing = null;
       await save();
     },
     failed: async () => {
       statistics.failed++;
+      statistics.processing = null;
+      await save();
+    },
+    started: async (organization) => {
+      statistics.processing = {
+        id: organization.id,
+        name: organization.name,
+        startedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
+        lastActivity: "processing started"
+      };
+      await save();
+    },
+    activity: async (message) => {
+      if (!statistics.processing) return;
+      statistics.processing.lastActivityAt = new Date().toISOString();
+      statistics.processing.lastActivity = message;
       await save();
     },
     snapshot: () => ({ ...statistics, changedOrganizations: [...statistics.changedOrganizations] })

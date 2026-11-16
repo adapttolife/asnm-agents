@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { createStatistics } from "./statistics.js";
 import { createLogger } from "./logger.js";
 import { browserExecutableCandidates } from "./browser.js";
+import { crawlSite } from "./crawler.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -48,12 +49,14 @@ test("persists per-run statistics after changed and skipped rows", async () => {
   const directory = await mkdtemp(join(tmpdir(), "org-filler-statistics-"));
   try {
     const statistics = await createStatistics({ mode: "apply", environment: "staging", directory });
+    await statistics.started({ id: "example-id", name: "Example Organization" });
     await statistics.changed("Example Organization");
     await statistics.skipped();
     const stored = JSON.parse(await readFile(statistics.file, "utf8"));
     assert.equal(stored.changed, 1);
     assert.equal(stored.skipped, 1);
     assert.deepEqual(stored.changedOrganizations, ["Example Organization"]);
+    assert.equal(stored.processing, null);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -73,4 +76,16 @@ test("writes each process logger to its own timestamped file", async () => {
 
 test("tries the configured Chromium executable before fallbacks", () => {
   assert.deepEqual(browserExecutableCandidates("/opt/chromium"), ["/opt/chromium", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/google-chrome"]);
+});
+
+test("reports crawler page progress", async () => {
+  const originalFetch = globalThis.fetch;
+  const progress = [];
+  globalThis.fetch = async () => new Response("<main><p>Example</p></main>", { headers: { "content-type": "text/html" } });
+  try {
+    await assert.rejects(crawlSite("https://example.org/", { onProgress: async (message) => progress.push(message) }), /No readable HTML pages were found/);
+    assert.match(progress[0], /crawler fetching page 1\//);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

@@ -34,9 +34,10 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function browserFallback(url, details) {
+async function browserFallback(url, details, report) {
   const startedAt = performance.now();
   try {
+    await report(`browser fallback starting: ${url}`);
     const site = await scrapeWithBrowser(url);
     details.push(`browser used successfully in ${elapsed(startedAt)}`);
     return site;
@@ -46,10 +47,11 @@ async function browserFallback(url, details) {
   }
 }
 
-async function crawl(url, details, label) {
+async function crawl(url, details, label, report) {
   const startedAt = performance.now();
   try {
-    const site = await crawlSite(url);
+    await report(`crawler starting${label}: ${url}`);
+    const site = await crawlSite(url, { onProgress: report });
     details.push(`crawler succeeded${label} in ${elapsed(startedAt)} (${site.pages.length} pages)`);
     return site;
   } catch (error) {
@@ -58,38 +60,45 @@ async function crawl(url, details, label) {
   }
 }
 
-async function searchForSite(row, search, details) {
+async function searchForSite(row, search, details, report) {
   const startedAt = performance.now();
+  await report("open-websearch starting");
   await search.start();
   const results = await search.search(searchQuery(row));
   details.push(`open-websearch used in ${elapsed(startedAt)} (${results.length} results)`);
   for (const result of results) {
-    const site = await crawl(result.url, details, " for a search result");
+    const site = await crawl(result.url, details, " for a search result", report);
     if (site) {
       details.push("browser not used because the crawler succeeded");
       return site;
     }
-    const browser = await browserFallback(result.url, details);
+    const browser = await browserFallback(result.url, details, report);
     if (browser.pages.length) return browser;
   }
   return { pages: [] };
 }
 
-async function collectSite(row, search) {
+async function collectSite(row, search, report) {
   const details = [];
   if (row.website_url) {
-    const site = await crawl(row.website_url, details, " for the stored URL");
+    const site = await crawl(row.website_url, details, " for the stored URL", report);
     if (site) {
       details.push("browser not used because the crawler succeeded");
       return { site, details };
     }
-    const browser = await browserFallback(row.website_url, details);
-    if (browser.pages.length) return { site: browser, details };
+    const browser = await browserFallback(row.website_url, details, report);
+    if (browser.pages.length) return {
+      site: browser,
+      details
+    };
   } else {
     details.push("crawler not attempted because no website URL is stored");
     details.push("browser not used because no website URL is stored");
   }
-  return { site: await searchForSite(row, search, details), details };
+  return {
+    site: await searchForSite(row, search, details, report),
+    details
+  };
 }
 
 function usage() {
@@ -106,12 +115,18 @@ async function runPass(args, logger, statistics, pool) {
     for (const row of rows) {
       const rowStartedAt = performance.now();
       try {
+        await statistics.started(row);
+        const report = async (message) => {
+          await logger.info(`${row.name}: ${message}`);
+          await statistics.activity(message);
+        };
+        await report("processing started");
         const deterministic = deterministicPatch(row, sportRows);
         const effective = { ...row, ...deterministic };
         const missing = FILLABLE_FIELDS.filter((field) => missingFields(effective).includes(field));
         let patch = { ...deterministic };
         if (missing.length) {
-          const { site, details } = await collectSite(effective, search);
+          const { site, details } = await collectSite(effective, search, report);
           await logger.info(`${row.name}: ${details.join("; ")}.`);
           if (site.pages.length) {
             summary.researched++;
