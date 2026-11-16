@@ -22,7 +22,7 @@ cp .env.example .env
 cp prod.env.example prod.env
 ```
 
-Set `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` in both environment files. Add further comma-separated Gemini keys in `GEMINI_API_KEYS`. The Cloudflare token replaces `wrangler login`, so runs continue after an interactive login expires. It needs the Account-level `D1:Edit` permission for the ASNM account. Set `BROWSER_EXECUTABLE_PATH` to the Chromium binary reported by `command -v chromium` (or the applicable installed browser command). Browser errors list every attempted executable path.
+Set `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` in both environment files. Add further comma-separated Gemini keys in `GEMINI_API_KEYS`. Set `GEMINI_BACKUP_MODELS` to a comma-separated ordered model list; each backup begins only after every configured key has exhausted the primary model's daily quota. The Cloudflare token replaces `wrangler login`, so runs continue after an interactive login expires. It needs the Account-level `D1:Edit` permission for the ASNM account. Set `BROWSER_EXECUTABLE_PATH` to the Chromium binary reported by `command -v chromium` (or the applicable installed browser command). Browser errors list every attempted executable path.
 
 `open-websearch` is installed with this project and starts as a temporary local HTTP service. Set `OPEN_WEBSEARCH_URL` only when it is already managed as a separate daemon. Set `OPEN_WEBSEARCH_ENGINES` to a comma-separated engine list, such as `duckduckgo,bing`.
 

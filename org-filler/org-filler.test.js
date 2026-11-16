@@ -12,7 +12,8 @@ import { createLogger } from "./logger.js";
 import { browserExecutableCandidates } from "./browser.js";
 import { crawlSite } from "./crawler.js";
 import { FILL_ELIGIBILITY } from "./database.js";
-import { searchEngines } from "./config.js";
+import { geminiModels, searchEngines } from "./config.js";
+import { GeminiPool } from "./gemini.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -95,4 +96,12 @@ test("reports crawler page progress", async () => {
 test("fills explicit filling rows and parses multiple search engines", () => {
   assert.match(FILL_ELIGIBILITY, /status = 'filling'/);
   assert.deepEqual(searchEngines("duckduckgo, bing,duckduckgo"), ["duckduckgo", "bing"]);
+});
+
+test("uses a backup model after the primary model reaches its daily quota", async () => {
+  const pool = new GeminiPool({ keys: ["test-key"], models: ["primary", "backup"] });
+  const primary = await pool.acquire();
+  pool.rateLimited(primary, true);
+  assert.equal((await pool.acquire()).model, "backup");
+  assert.deepEqual(geminiModels("primary", "backup,primary"), ["primary", "backup"]);
 });

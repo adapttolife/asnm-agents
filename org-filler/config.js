@@ -16,6 +16,10 @@ if (applicationRun && !existsSync(wranglerPath)) throw new Error(`Missing ${WRAN
 if (existsSync(environmentPath)) loadEnvironment({ path: environmentPath, override: false, quiet: true });
 if (process.env.DATABASE_NAME && process.env.DATABASE_NAME !== DATABASE_NAME) throw new Error(`${ENVIRONMENT_FILE} targets ${process.env.DATABASE_NAME}, but this run requires ${DATABASE_NAME}.`);
 export const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemma-4-26b-a4b-it";
+export function geminiModels(primary = DEFAULT_MODEL, backups = process.env.GEMINI_BACKUP_MODELS || "") {
+  return [...new Set([primary, ...String(backups).split(",")].map((model) => model.trim()).filter(Boolean))];
+}
+export const GEMINI_MODELS = geminiModels();
 export const FILLABLE_FIELDS = [
   "sport_key",
   "website_url",
