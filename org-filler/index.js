@@ -1,5 +1,5 @@
 import { applyPatch, candidates, sports } from "./database.js";
-import { DATABASE_NAME, ENVIRONMENT_FILE, FILLABLE_FIELDS, IS_PRODUCTION, WRANGLER_CONFIG } from "./config.js";
+import { DATABASE_NAME, ENVIRONMENT_FILE, FILLABLE_FIELDS, IS_PRODUCTION, RUN_INTERVAL_MS, WRANGLER_CONFIG } from "./config.js";
 import { scrapeWithBrowser } from "./browser.js";
 import { crawlSite } from "./crawler.js";
 import { fillMissing, GeminiPool, normalizePatch } from "./gemini.js";
@@ -28,6 +28,10 @@ function emptyOnly(patch, row) {
 
 function elapsed(startedAt) {
   return formatDuration(performance.now() - startedAt);
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 async function browserFallback(url, details) {
@@ -92,21 +96,11 @@ function usage() {
   console.log("Usage: node index.js [--prod] [--limit 10] [--id organization-id] [--apply]");
 }
 
-async function main() {
-  const args = options(process.argv.slice(2));
-  if (args.help) return usage();
+async function runPass(args, logger, statistics, pool) {
   const startedAt = performance.now();
-  const logger = await createLogger();
-  const statistics = await createStatistics({
-    mode: args.apply ? "apply" : "dry-run",
-    environment: IS_PRODUCTION ? "production" : "staging"
-  });
-  await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode for ${IS_PRODUCTION ? "production" : "staging"} (${DATABASE_NAME}, ${WRANGLER_CONFIG}, ${ENVIRONMENT_FILE}). Log file: ${logger.file}`);
-  await logger.info(`Statistics file: ${statistics.file}`);
   const [sportRows, rows] = await Promise.all([sports(), candidates(args.limit, args.id)]);
   await logger.info(`Rows that still need filling: ${rows.length}/${args.limit}`);
   const search = new OpenWebSearch();
-  const pool = new GeminiPool();
   const summary = { mode: args.apply ? "apply" : "dry-run", candidates: rows.length, researched: 0, changed: 0, skipped: 0, failed: 0 };
   try {
     for (const row of rows) {
@@ -157,6 +151,28 @@ async function main() {
     await search.close();
   }
   await logger.info(`${JSON.stringify(summary)} Total runtime: ${elapsed(startedAt)}.`);
+  return summary;
+}
+
+async function main() {
+  const args = options(process.argv.slice(2));
+  if (args.help) return usage();
+  const logger = await createLogger();
+  const statistics = await createStatistics({
+    mode: args.apply ? "apply" : "dry-run",
+    environment: IS_PRODUCTION ? "production" : "staging"
+  });
+  const repeat = args.apply && !args.id;
+  const pool = new GeminiPool();
+  await logger.info(`Organization filler started in ${args.apply ? "apply" : "dry-run"} mode for ${IS_PRODUCTION ? "production" : "staging"} (${DATABASE_NAME}, ${WRANGLER_CONFIG}, ${ENVIRONMENT_FILE}). Log file: ${logger.file}`);
+  await logger.info(`Statistics file: ${statistics.file}`);
+  if (repeat) await logger.info(`Completed passes repeat every ${formatDuration(RUN_INTERVAL_MS)}. Use --id or omit --apply for a one-shot run.`);
+  do {
+    await runPass(args, logger, statistics, pool);
+    if (!repeat) break;
+    await logger.info(`Pass complete. Waiting ${formatDuration(RUN_INTERVAL_MS)} before the next pass.`);
+    await wait(RUN_INTERVAL_MS);
+  } while (repeat);
 }
 
 main().catch((error) => {

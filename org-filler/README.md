@@ -44,7 +44,7 @@ Production uses `prod.env`, `wrangler.prod.jsonc`, and `asnm-db`:
 npm run prod
 ```
 
-`npm run prod` includes `--apply`, so it writes approved values to production. Every run fails before accessing D1 if its selected environment file or Wrangler configuration file is missing, or if the environment file names the wrong database.
+`npm run prod` includes `--apply`, so it writes approved values to production and repeats after each completed pass. Apply-mode runs without `--id` wait one hour between passes by default; set `RUN_INTERVAL_MS` in the selected environment file to change that interval (minimum one minute). Dry runs and runs with `--id` remain one-shot. Every run fails before accessing D1 if its selected environment file or Wrangler configuration file is missing, or if the environment file names the wrong database.
 
 ## Fields
 

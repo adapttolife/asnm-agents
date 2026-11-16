@@ -37,6 +37,7 @@ export const SITE_REQUEST_INTERVAL_MS = Number(process.env.SITE_REQUEST_INTERVAL
 export const SEARCH_INTERVAL_MS = Number(process.env.SEARCH_INTERVAL_MS || 5000);
 export const GEMINI_REQUESTS_PER_MINUTE = Number(process.env.GEMINI_REQUESTS_PER_MINUTE || 10);
 export const GEMINI_REQUESTS_PER_DAY = Number(process.env.GEMINI_REQUESTS_PER_DAY || 500);
+export const RUN_INTERVAL_MS = Math.max(60_000, Number(process.env.RUN_INTERVAL_MS) || 3_600_000);
 export const STATE_NAMES = Object.freeze({
   AL: "Alabama",
   AK: "Alaska",
