@@ -15,7 +15,7 @@ if (applicationRun && !existsSync(environmentPath)) throw new Error(`Missing ${E
 if (applicationRun && !existsSync(wranglerPath)) throw new Error(`Missing ${WRANGLER_CONFIG}. org-filler cannot select its D1 target.`);
 if (existsSync(environmentPath)) loadEnvironment({ path: environmentPath, override: false, quiet: true });
 if (process.env.DATABASE_NAME && process.env.DATABASE_NAME !== DATABASE_NAME) throw new Error(`${ENVIRONMENT_FILE} targets ${process.env.DATABASE_NAME}, but this run requires ${DATABASE_NAME}.`);
-export const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+export const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemma-4-26b-a4b-it";
 export const FILLABLE_FIELDS = [
   "sport_key",
   "website_url",
@@ -36,6 +36,10 @@ export const MAX_MARKDOWN_CHARS = Number(process.env.MAX_MARKDOWN_CHARS || 10000
 export const SITE_REQUEST_INTERVAL_MS = Number(process.env.SITE_REQUEST_INTERVAL_MS || 1000);
 export const MAX_CRAWL_DURATION_MS = Math.max(1_000, Number(process.env.MAX_CRAWL_DURATION_MS) || 60_000);
 export const SEARCH_INTERVAL_MS = Number(process.env.SEARCH_INTERVAL_MS || 5000);
+export function searchEngines(value = process.env.OPEN_WEBSEARCH_ENGINES || process.env.OPEN_WEBSEARCH_ENGINE || "duckduckgo,bing") {
+  return [...new Set(String(value).split(",").map((engine) => engine.trim()).filter(Boolean))];
+}
+export const OPEN_WEBSEARCH_ENGINES = searchEngines();
 export const GEMINI_REQUESTS_PER_MINUTE = Number(process.env.GEMINI_REQUESTS_PER_MINUTE || 10);
 export const GEMINI_REQUESTS_PER_DAY = Number(process.env.GEMINI_REQUESTS_PER_DAY || 500);
 export const RUN_INTERVAL_MS = Math.max(60_000, Number(process.env.RUN_INTERVAL_MS) || 3_600_000);

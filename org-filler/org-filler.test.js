@@ -11,6 +11,8 @@ import { createStatistics } from "./statistics.js";
 import { createLogger } from "./logger.js";
 import { browserExecutableCandidates } from "./browser.js";
 import { crawlSite } from "./crawler.js";
+import { FILL_ELIGIBILITY } from "./database.js";
+import { searchEngines } from "./config.js";
 
 test("converts readable content to Markdown and removes navigation", () => {
   const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
@@ -88,4 +90,9 @@ test("reports crawler page progress", async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("fills explicit filling rows and parses multiple search engines", () => {
+  assert.match(FILL_ELIGIBILITY, /status = 'filling'/);
+  assert.deepEqual(searchEngines("duckduckgo, bing,duckduckgo"), ["duckduckgo", "bing"]);
 });

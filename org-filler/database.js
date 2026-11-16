@@ -5,6 +5,7 @@ import { DATABASE_NAME, FILLABLE_FIELDS, IS_PRODUCTION, WRANGLER_CONFIG } from "
 const execFile = promisify(execFileCallback);
 const empty = (column) => `NULLIF(TRIM(COALESCE(${column}, '')), '') IS NULL`;
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
+export const FILL_ELIGIBILITY = "(status = 'filling' OR (verification_status = 'verified' AND status = 'active'))";
 
 function parseWranglerJson(stdout) {
   const start = stdout.indexOf("[");
@@ -31,12 +32,12 @@ export async function sports() {
 }
 
 export async function candidates(limit, id = "") {
-  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE verification_status = 'verified' AND status = 'active' ${id ? `AND id = ${quote(id)}` : ""} AND (${FILLABLE_FIELDS.map((field) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")}) ORDER BY updated_at ASC, name COLLATE NOCASE${limit === Infinity ? "" : ` LIMIT ${Math.max(1, Number(limit) || 1)}`}`);
+  return execute(`SELECT id, name, sport, sport_key, website_url, email, phone, city, state, state_name, zip, address, lat, lng, geo_precision, description FROM organizations WHERE ${FILL_ELIGIBILITY} ${id ? `AND id = ${quote(id)}` : ""} AND (${FILLABLE_FIELDS.map((field) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")}) ORDER BY updated_at ASC, name COLLATE NOCASE${limit === Infinity ? "" : ` LIMIT ${Math.max(1, Number(limit) || 1)}`}`);
 }
 
 export async function applyPatch(id, patch) {
   const entries = Object.entries(patch).filter(([field, value]) => FILLABLE_FIELDS.includes(field) && (value !== null) && (value !== undefined) && (value !== ""));
   if (!entries.length) return false;
-  await execute(`UPDATE organizations SET ${entries.map(([field, value]) => ["lat", "lng"].includes(field) ? `${field} = COALESCE(${field}, ${Number(value)})` : `${field} = COALESCE(NULLIF(TRIM(${field}), ''), ${quote(value)})`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ${quote(id)} AND verification_status = 'verified' AND status = 'active' AND (${entries.map(([field]) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")})`);
+  await execute(`UPDATE organizations SET ${entries.map(([field, value]) => ["lat", "lng"].includes(field) ? `${field} = COALESCE(${field}, ${Number(value)})` : `${field} = COALESCE(NULLIF(TRIM(${field}), ''), ${quote(value)})`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ${quote(id)} AND ${FILL_ELIGIBILITY} AND (${entries.map(([field]) => ["lat", "lng"].includes(field) ? `${field} IS NULL` : empty(field)).join(" OR ")})`);
   return true;
 }

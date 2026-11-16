@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { SEARCH_INTERVAL_MS } from "./config.js";
+import { OPEN_WEBSEARCH_ENGINES, SEARCH_INTERVAL_MS } from "./config.js";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -27,8 +27,8 @@ export class OpenWebSearch {
       env: {
         ...process.env,
         MODE: "http",
-        DEFAULT_SEARCH_ENGINE: process.env.OPEN_WEBSEARCH_ENGINE || "duckduckgo",
-        ALLOWED_SEARCH_ENGINES: process.env.OPEN_WEBSEARCH_ENGINE || "duckduckgo"
+        DEFAULT_SEARCH_ENGINE: OPEN_WEBSEARCH_ENGINES[0],
+        ALLOWED_SEARCH_ENGINES: OPEN_WEBSEARCH_ENGINES.join(",")
       },
       stdio: "ignore",
     });
@@ -57,7 +57,7 @@ export class OpenWebSearch {
       body: JSON.stringify({
         query,
         limit: 5,
-        engines: [process.env.OPEN_WEBSEARCH_ENGINE || "duckduckgo"]
+        engines: OPEN_WEBSEARCH_ENGINES
       })
     });
     this.lastSearchAt = Date.now();
