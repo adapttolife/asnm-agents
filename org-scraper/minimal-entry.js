@@ -1,5 +1,1 @@
-export default {
-  async fetch(request, env) {
-    return new Response("ok");
-  },
-};
+export default { fetch: () => new Response("org-scraper D1 client") };

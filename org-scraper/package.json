@@ -1,42 +1,21 @@
 {
-	"name": "org-scraper",
-	"version": "1.0.0",
-	"description": "Scrape adaptive sports organizations from search engines using Gemini for ASNM.",
-	"main": "controller.js",
-	"scripts": {
-		"controller": "node controller.js",
-		"start": "node scrape.js",
-		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-		"test:locks": "node --experimental-vm-modules node_modules/jest/bin/jest.js locks.test.js",
-		"test:db": "node --experimental-vm-modules node_modules/jest/bin/jest.js database.test.js",
-		"test:gemini": "node --experimental-vm-modules node_modules/jest/bin/jest.js gemini.test.js",
-		"dev": "nodemon scrape.js",
-		"schema": "node schema.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/adapttolife/asnm-agents.git"
-	},
-	"keywords": [
-		"scraper",
-		"gemini"
-	],
-	"author": "Faisal N",
-	"license": "ISC",
-	"bugs": {
-		"url": "https://github.com/adapttolife/asnm-agents/issues"
-	},
-	"homepage": "https://github.com/adapttolife/asnm-agents#readme",
-	"dependencies": {
-		"@dangoweb/cdn": "^1.1.0",
-		"@google/genai": "^2.27.0",
-		"better-sqlite3": "^13.0.3",
-		"dotenv": "^18.0.6"
-	},
-	"devDependencies": {
-		"jest": "^29.7.0",
-		"nodemon": "^3.0.1",
-		"wrangler": "^4.149.0"
-	},
-	"type": "module"
+  "name": "asnm-org-scraper",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --once --dry-run",
+    "staging": "node index.js",
+    "prod": "node index.js --prod",
+    "seed:areas": "node scripts/seed-areas.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6",
+    "open-websearch": "^2.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.149.0"
+  }
 }

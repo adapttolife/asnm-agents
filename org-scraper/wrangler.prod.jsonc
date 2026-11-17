@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "org-scraper-d1",
+  "compatibility_date": "2026-11-16",
+  "main": "minimal-entry.js",
+  "d1_databases": [{ "binding": "DB", "database_name": "asnm-db", "database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b", "remote": true }]
+}

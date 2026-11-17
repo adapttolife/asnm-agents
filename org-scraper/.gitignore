@@ -1,7 +1,5 @@
-locks/*
-logs/*
-.env
-*.vars
 node_modules/
-cache/*
-.wrangler/
+.env
+prod.env
+logs/
+statistics/
