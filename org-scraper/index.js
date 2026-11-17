@@ -48,7 +48,10 @@ async function runOnce({ areas, search, logger, statistics, dryRun }) {
     const results = await search.search(searchQuery(sport, pair));
     const candidates = newOrganizations(results, existing);
     await logger.info(`${sport.name} / ${pair.name}: ${existing.length} existing organizations, ${results.length} search results, ${candidates.length} new candidates.`);
-    if (!dryRun) for (const candidate of candidates) await insertOrganization(candidate);
+    if (!dryRun) for (const candidate of candidates) {
+      await logger.info(`Inserting organization: ${candidate.name} (${candidate.website_url || "no website"}) for sport ${sport.name} in area ${pair.kind} ${pair.name}`);
+      await insertOrganization(candidate, sport, pair);
+    }
     if (!dryRun) await releasePair(pair, sport.sport_key, token);
     await statistics.completed(pairStatistic, candidates.length);
     await logger.info(`${sport.name} / ${pair.name}: ${dryRun ? "would add" : "added"} ${candidates.length} organizations and released the pair.`);
