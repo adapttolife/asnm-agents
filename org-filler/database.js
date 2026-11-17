@@ -5,7 +5,8 @@ import { DATABASE_NAME, FILLABLE_FIELDS, IS_PRODUCTION, WRANGLER_CONFIG } from "
 const execFile = promisify(execFileCallback);
 const empty = (column) => `NULLIF(TRIM(COALESCE(${column}, '')), '') IS NULL`;
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
-export const FILL_ELIGIBILITY = "(status = 'filling' OR (verification_status = 'verified' AND status = 'active'))";
+// export const FILL_ELIGIBILITY = "(status = 'filling' OR (verification_status = 'verified' AND status = 'active'))";
+export const FILL_ELIGIBILITY = "(verification_status = 'verified' AND status = 'active')";
 
 function parseWranglerJson(stdout) {
   const start = stdout.indexOf("[");
