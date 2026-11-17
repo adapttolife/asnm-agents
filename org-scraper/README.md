@@ -28,3 +28,7 @@ node index.js --once
 ```
 
 Normal staging and production runs continuously: they choose a due, unlocked sport-area pair, atomically lock it in D1, query matching existing organizations, search multiple engines, add only candidates not already in that area, then release and timestamp the pair. County pairs wait 91 days, city pairs 183 days, and state pairs 30 days before they are eligible again. A failed run unlocks the pair without advancing its refresh timestamp.
+
+## Statistics
+
+Each process creates one JSON file in `statistics/`. It updates after every pair outcome and records completed, skipped, and failed pairs; candidates found; organizations queued for filling; processed sport-area pairs; and the pair currently being searched.

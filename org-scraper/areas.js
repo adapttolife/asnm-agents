@@ -9,9 +9,14 @@ export async function loadAreas() {
   return areas;
 }
 
-export function pickArea(areas) {
+export function pickArea(areas, random = Math.random) {
   const kinds = ["county", "city", "state"];
-  const kind = kinds[Math.floor(Math.random() * kinds.length)];
-  const values = areas[`${kind}s`];
-  return { kind, ...values[Math.floor(Math.random() * values.length)] };
+  const collections = {
+    county: areas.counties,
+    city: areas.cities,
+    state: areas.states
+  };
+  const kind = kinds[Math.floor(random() * kinds.length)];
+  const values = collections[kind];
+  return { kind, ...values[Math.floor(random() * values.length)] };
 }
