@@ -72,8 +72,12 @@ async function main() {
   await logger.info(`Statistics file: ${statistics.file}`);
   try {
     do {
-      try { await runOnce({ areas, search, logger, statistics, dryRun: args.dryRun }); }
-      catch (error) { await statistics.failed(); await logger.error(error.stack || error.message); }
+      try {
+        await runOnce({ areas, search, logger, statistics, dryRun: args.dryRun });
+      } catch (error) {
+        await statistics.failed();
+        await logger.error(error.stack || error.message);
+      }
       if (args.once || args.dryRun) break;
       await logger.info(`Waiting ${Math.round(RUN_INTERVAL_MS / 60_000)} minutes before the next pair.`);
       await wait(RUN_INTERVAL_MS);

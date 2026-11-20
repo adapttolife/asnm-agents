@@ -1,0 +1,21 @@
+{
+  "name": "asnm-program-scraper",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --once --dry-run",
+    "staging": "node index.js",
+    "prod": "node index.js --prod",
+    "seed:areas": "node scripts/seed-areas.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6",
+    "open-websearch": "^2.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.149.0"
+  }
+}

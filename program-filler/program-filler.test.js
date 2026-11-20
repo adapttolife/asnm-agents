@@ -1,0 +1,107 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { internalLinks, pageToMarkdown } from "./markdown.js";
+import { normalizePatch } from "./gemini.js";
+import { deterministicPatch } from "./normalize.js";
+import { geocodeAddress } from "./geocode.js";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createStatistics } from "./statistics.js";
+import { createLogger } from "./logger.js";
+import { browserExecutableCandidates } from "./browser.js";
+import { crawlSite } from "./crawler.js";
+import { FILL_ELIGIBILITY } from "./database.js";
+import { geminiModels, searchEngines } from "./config.js";
+import { GeminiPool } from "./gemini.js";
+
+test("converts readable content to Markdown and removes navigation", () => {
+  const page = pageToMarkdown("<html><head><title>Example</title></head><body><nav>Ignore</nav><main><h1>Heading</h1><p>Useful <strong>content</strong>.</p></main></body></html>", "https://example.org/");
+  assert.equal(page.title, "Example");
+  assert.match(page.markdown, /Heading/);
+  assert.match(page.markdown, /Useful \*\*content\*\*/);
+  assert.doesNotMatch(page.markdown, /Ignore/);
+});
+
+test("keeps only same-origin crawlable links", () => {
+  const links = internalLinks("<a href='/about'>About</a><a href='https://other.example/x'>Other</a><a href='/image.png'>Image</a>", "https://example.org/", "https://example.org");
+  assert.deepEqual(links, ["https://example.org/about"]);
+});
+
+test("normalizes only allowed, valid program fields", () => {
+  const patch = normalizePatch({ state: "ny", zip: "12180", email: "INFO@example.org", lat: 42.7, lng: -73.6, description: "A sufficiently long adaptive sports program description." }, [{ sport_key: "basketball", name: "Basketball" }]);
+  assert.deepEqual(patch, { email: "info@example.org", state: "NY", state_name: "New York", zip: "12180", lat: 42.7, lng: -73.6, description: "A sufficiently long adaptive sports program description." });
+});
+
+test("fills deterministic sport and state names without overwriting existing values", () => {
+  const patch = deterministicPatch({ sport: "Wheelchair Basketball", sport_key: null, state: "CO", state_name: null }, [{ name: "Wheelchair Basketball", sport_key: "basketball" }]);
+  assert.deepEqual(patch, { sport_key: "basketball", sports_json: '["basketball"]', state_name: "Colorado" });
+});
+
+test("collects a ZIP code from a confirmed Census address match", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ result: { addressMatches: [{ coordinates: { x: -73.675, y: 42.736 }, addressComponents: { zip: "12180" } }] } }), { status: 200 });
+  try {
+    assert.deepEqual(await geocodeAddress({ address: "1 Main St", city: "Troy", state: "NY" }), { lat: 42.736, lng: -73.675, zip: "12180", geo_precision: "address" });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("persists per-run statistics after changed and skipped rows", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "program-filler-statistics-"));
+  try {
+    const statistics = await createStatistics({ mode: "apply", environment: "staging", directory });
+    await statistics.started({ id: "example-id", name: "Example Program" });
+    await statistics.changed("Example Program");
+    await statistics.skipped();
+    const stored = JSON.parse(await readFile(statistics.file, "utf8"));
+    assert.equal(stored.changed, 1);
+    assert.equal(stored.skipped, 1);
+    assert.deepEqual(stored.changedPrograms, ["Example Program"]);
+    assert.equal(stored.processing, null);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("writes each process logger to its own timestamped file", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "program-filler-logs-"));
+  try {
+    const logger = await createLogger(directory);
+    await logger.info("Run started");
+    assert.match(logger.file, /program-filler-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-\d+\.log$/);
+    assert.match(await readFile(logger.file, "utf8"), /INFO Run started/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("tries the configured Chromium executable before fallbacks", () => {
+  assert.deepEqual(browserExecutableCandidates("/opt/chromium"), ["/opt/chromium", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/usr/bin/google-chrome"]);
+});
+
+test("reports crawler page progress", async () => {
+  const originalFetch = globalThis.fetch;
+  const progress = [];
+  globalThis.fetch = async () => new Response("<main><p>Example</p></main>", { headers: { "content-type": "text/html" } });
+  try {
+    await assert.rejects(crawlSite("https://example.org/", { onProgress: async (message) => progress.push(message) }), /No readable HTML pages were found/);
+    assert.match(progress[0], /crawler fetching page 1\//);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("filler processes all program rows and parses multiple search engines", () => {
+  assert.match(FILL_ELIGIBILITY, /kind = 'program'/);
+  assert.deepEqual(searchEngines("duckduckgo, bing,duckduckgo"), ["duckduckgo", "bing"]);
+});
+
+test("uses a backup model after the primary model reaches its daily quota", async () => {
+  const pool = new GeminiPool({ keys: ["test-key"], models: ["primary", "backup"] });
+  const primary = await pool.acquire();
+  pool.rateLimited(primary, true);
+  assert.equal((await pool.acquire()).model, "backup");
+  assert.deepEqual(geminiModels("primary", "backup,primary"), ["primary", "backup"]);
+});

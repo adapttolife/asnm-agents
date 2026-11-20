@@ -1,10 +1,10 @@
 # ASNM organization scraper
 
-`org-scraper` discovers possible organizations for a sport and U.S. area. It saves only a candidate name and public website URL, with `verification_status = 'unverified'`, `status = 'filling'`, `is_public = 0`, and both consent fields set to `0`. `org-filler` later researches the candidate before it can become public.
+`org-scraper` discovers possible organizations for a sport and U.S. area. New organization rows remain unverified and private. `org-filler` fills organization details, and `program-scraper` discovers programs and links them to known organizations.
 
 ## Setup
 
-Run the D1 migration `db/migrations/0025_organization_discovery_pairs.sql` against staging and production, then install and seed the geographic catalog on the Pi:
+Run `db/migrations/0025_organization_discovery_pairs.sql` against staging and production, then install and seed the geographic catalog on the Pi:
 
 ```sh
 cd ~/asnm-agents/org-scraper
@@ -27,8 +27,8 @@ npm run prod
 node index.js --once
 ```
 
-Normal staging and production runs continuously: they choose a due, unlocked sport-area pair, atomically lock it in D1, query matching existing organizations, search multiple engines, add only candidates not already in that area, then release and timestamp the pair. County pairs wait 91 days, city pairs 183 days, and state pairs 30 days before they are eligible again. A failed run unlocks the pair without advancing its refresh timestamp.
+Normal staging and production runs continuously. Each cycle searches a due, locked sport-area pair for new organizations. Area pairs use the existing county/city/state refresh periods of 91/183/30 days. Failed runs release their locks without advancing their refresh timestamps.
 
 ## Statistics
 
-Each process creates one JSON file in `statistics/`. It updates after every pair outcome and records completed, skipped, and failed pairs; candidates found; organizations queued for filling; processed sport-area pairs; and the pair currently being searched.
+Each process creates one JSON file in `statistics/`. It records area pairs completed/skipped, organizations queued, failures, processed pairs, and the current search target.
