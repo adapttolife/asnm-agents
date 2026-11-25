@@ -1,0 +1,21 @@
+{
+  "name": "asnm-grant-scraper",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --once",
+    "staging": "node index.js --apply",
+    "prod": "node index.js --prod --apply",
+    "seed:areas": "node scripts/seed-areas.js",
+    "test": "node --test grant-scraper.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6",
+    "open-websearch": "^2.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.149.0"
+  }
+}

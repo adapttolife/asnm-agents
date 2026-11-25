@@ -16,7 +16,7 @@ export function formatDuration(milliseconds) {
 }
 
 export async function createLogger(directory = join(process.cwd(), "logs")) {
-  const file = join(directory, `program-filler-${runId(new Date())}-${process.pid}.log`);
+  const file = join(directory, `grant-filler-${runId(new Date())}-${process.pid}.log`);
   await mkdir(directory, { recursive: true });
   const write = async (level, message) => {
     const output = line(level, message);

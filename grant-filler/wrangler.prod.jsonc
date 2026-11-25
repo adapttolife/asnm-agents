@@ -1,13 +1,13 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "program-filler-d1",
+	"name": "grant-filler-d1",
 	"compatibility_date": "2026-11-10",
 	"main": "minimal-entry.js",
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "asnm-db-staging",
-			"database_id": "d3f67da7-60a3-44b6-9215-28665492d3f9",
+			"database_name": "asnm-db",
+			"database_id": "055916fd-3e58-4599-b11e-ffaedabe0f0b",
 			"remote": true,
 		},
 	],

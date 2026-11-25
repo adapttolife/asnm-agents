@@ -8,7 +8,7 @@ function runId(date = new Date()) {
 export async function createStatistics({ mode, environment, directory = join(process.cwd(), "statistics") }) {
   await mkdir(directory, { recursive: true });
   const startedAt = new Date().toISOString();
-  const file = join(directory, `program-filler-${runId(new Date())}-${process.pid}.json`);
+  const file = join(directory, `grant-filler-${runId(new Date())}-${process.pid}.json`);
   const statistics = {
     mode,
     environment,
@@ -17,7 +17,7 @@ export async function createStatistics({ mode, environment, directory = join(pro
     changed: 0,
     skipped: 0,
     failed: 0,
-    changedPrograms: [],
+    changedGrants: [],
     processing: null
   };
 
@@ -29,9 +29,9 @@ export async function createStatistics({ mode, environment, directory = join(pro
   await save();
   return {
     file,
-    changed: async (program) => {
+    changed: async (grant) => {
       statistics.changed++;
-      statistics.changedPrograms.push(program);
+      statistics.changedGrants.push(grant);
       statistics.processing = null;
       await save();
     },
@@ -45,10 +45,10 @@ export async function createStatistics({ mode, environment, directory = join(pro
       statistics.processing = null;
       await save();
     },
-    started: async (program) => {
+    started: async (grant) => {
       statistics.processing = {
-        id: program.id,
-        name: program.name,
+        id: grant.id,
+        name: grant.name,
         startedAt: new Date().toISOString(),
         lastActivityAt: new Date().toISOString(),
         lastActivity: "processing started"
@@ -61,6 +61,6 @@ export async function createStatistics({ mode, environment, directory = join(pro
       statistics.processing.lastActivity = message;
       await save();
     },
-    snapshot: () => ({ ...statistics, changedPrograms: [...statistics.changedPrograms] })
+    snapshot: () => ({ ...statistics, changedGrants: [...statistics.changedGrants] })
   };
 }
